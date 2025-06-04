@@ -3,13 +3,15 @@ from . import dashboard_bp
 from ...extensions import Helpers
 import logging
 from google import genai
+from elevenlabs.client import ElevenLabs
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-client = genai.Client(api_key=os.getenv("API_KEY"))  # TODO: UNIFY IN .env
+gemini_client = genai.Client(api_key=os.getenv("API_KEY"))  # TODO: UNIFY IN .env
+elevenlabs_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
 
 # Main routes
@@ -184,7 +186,7 @@ def ai_model(nugget):
         username=user_data["username"],
         models=[
             m.name
-            for m in client.models.list()
+            for m in gemini_client.models.list()
             if "generateContent" in m.supported_actions
         ],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
@@ -345,7 +347,9 @@ def features_voice(nugget):
     if any(
         item in request.args
         for item in [
-            "vociceModel",
+            "voiceModel",
+            "voiceMessage",
+            "voiceMessageConvo",
             "recording-time",
         ]
     ):  # this checks to see if any of the items that can change have changed, if so we need to check to see which one of these is none
@@ -362,6 +366,7 @@ def features_voice(nugget):
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        voice_models=elevenlabs_client.models.get_all(),
     )
 
 

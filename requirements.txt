@@ -2,4 +2,5 @@ flask
 requests
 python-dotenv
 google-genai
+elevenlabs
 docker

@@ -14,21 +14,15 @@
     <form class="settings-form" id="voiceSettingsForm">
         <div class="settings-group">
             <div class="settings-card">
-                <h2 class="card-title">Voice configuration</h2>
+                <h2 class="card-title">Voice call configuration</h2>
                 
                 <div class="form-group">
                     <label for=""></label>
                     <div class="input-description">How should your bot speak</div>
                     <select class="input select" id="voiceModel" name="vociceModel">
-                        <option value="">Eleven Multilingual V2</option>
-                        <option value="NEV">Eleven Flash V2.5</option>
-                        <option value="NEV">Eleven Turbo V2.5</option>
-                        <option value="NEV">Eleven Turbo V2</option>
-                        <option value="NEV">Eleven Flash V2</option>
-                        <option value="NEV">Eleven Multilingual V1</option>
-                        <option value="NEV">Eleven English V1</option>
-
-
+                        {% for voice_model in voice_models %}
+                            <option value="{{voice_model.model_id}}">{{voice_model.name}}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
@@ -38,6 +32,27 @@
                         <input type="number" class="input number" id="recording-time" name="recording-time" 
                                value="10" min="0">
                     </div>
+                </div>
+                    <div class="form-group">
+                    <label for="voiceMessage" class="switch-label">
+                        <div class="switch-label-text">Voice Mesage</div>
+                        <div class="switch">
+                            <input type="checkbox" id="voiceMessage" name="voiceMessage">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                    <div class="input-description">Allows nugget to send voice messages (beta)</div>
+                </div>
+                <div class="form-group">
+                    <label for="voiceMessageConvo" class="switch-label">
+                        <div class="switch-label-text">Voice message conversation</div>
+                        <div class="switch">
+                            <input type="checkbox" id="voiceMessageConvo" name="voiceMessageConvo">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
+                    <div class="input-description">Allows nugget to converse with you in voice messages, ie you send a voice note, it sends one back</div>
+                </div>
                 </div>
             </div>
         </div>
@@ -131,6 +146,13 @@
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b4b4d1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 15px center;
+    }
+
+
+    .input.select option {
+        background-color: #1e1e2f; /* Match your site's dark background */
+        color: #ffffff; /* Text color */
+        border: 1px solid #444; /* Optional: to match your theme */
     }
 
     .form-actions {
