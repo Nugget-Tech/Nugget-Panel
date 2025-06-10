@@ -1,0 +1,902 @@
+{% extends "base.html" %}
+{% from "components/save-button.html" import save_button %}
+
+{% block title %}Memory Management - Nugget Tech{% endblock %}
+
+{% block page_title %}🧠 Memory Management{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <p class="page-description">Manage your bot's long-term memories and conversation history.</p>
+        
+        <div class="guild-selector-container">
+            <div class="guild-selector">
+                <label class="guild-selector-label">
+                    <i class="fab fa-discord"></i>
+                    Select Server
+                </label>
+                <div class="guild-select-container">
+                    <select class="guild-select" id="guildSelect">
+                        <option value="" data-icon="/static/invisible.png">Choose a Discord server...</option>
+                        {% for guild in guilds %}
+                        <option value="{{guild.id}}" data-icon="https://cdn.discordapp.com/icons/{{guild.id}}/{{guild.icon}}.png?size=12">
+                            <div class="guild-option">{{guild.name}}</div>
+                        </option>
+                        {% endfor %}
+                    </select>
+
+
+
+                    <!-- Custom select options container -->
+                    <div class="guild-option-container">
+                        {% for guild in guilds %}
+                        <div class="guild-option" data-value="{{guild.id}}">
+                            <img src="https://cdn.discordapp.com/icons/{{guild.id}}/{{guild.icon}}.png?size=24" alt="Guild Icon">
+                            {{guild.name}}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Selected guild display -->
+                    <div class="selected-guild" id="selectedGuild">
+                        <img src="" alt="Selected Guild Icon" id="selectedGuildIcon">
+                        <span id="selectedGuildName">Choose a Discord server...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="memories-container">
+        <!-- Accordion Items -->
+        <div class="accordion">
+            <div class="accordion-item">
+                <div class="accordion-header">
+                    <span class="memory-title">This is where memories show up</span>
+                    <button class="button-danger" aria-label="Delete memory">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="accordion-content">
+                    <p>Memories are created dynamically or you can force generate one by using the "!remember" command.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Memory Button -->
+        <div class="add-memory-container">
+            <button class="button button-primary add-memory-button">
+                <i class="fas fa-plus"></i>
+                Add New Memory
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Memory Modal -->
+    <div class="modal" id="addMemoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Memory</h2>
+                <button class="modal-close" aria-label="Close modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addMemoryForm" class="memory-form">
+                <div class="form-group">
+                    <label for="memoryTitle">Memory Title</label>
+                    <div class="input-description">Give your memory a descriptive title</div>
+                    <input type="text" id="memoryTitle" name="memoryTitle" class="input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="memoryContent">Memory Content</label>
+                    <div class="input-description">Enter the content of the memory</div>
+                    <textarea id="memoryContent" name="memoryContent" class="input textarea" rows="6" required></textarea>
+                </div>
+
+                <div class="form-actions modal-actions">
+                    <button type="button" class="button button-secondary cancel-button">Cancel</button>
+                    <button type="submit" class="button button-primary">
+                        <i class="fas fa-save"></i>
+                        Save Memory
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .page-description {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .guild-selector-container {
+        margin-bottom: 24px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px 16px;
+    }
+
+    .guild-selector {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+    }
+
+    .guild-select-container {
+        flex: 1;
+        position: relative;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .guild-select {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 8px 36px 8px 40px;
+        color: var(--text);
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+    }
+
+    /* Custom select styling */
+    .guild-option-container {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        background: #1a1b2e;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        display: none;
+        z-index: 100;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .guild-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        background: var(--bg-card);
+    }
+
+    .guild-option:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .selected-guild {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 36px 8px 12px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .selected-guild img {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .guild-selector::after {
+        content: '';
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid var(--text-muted);
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    .memories-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .accordion {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .accordion-item {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .accordion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .accordion-header:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .memory-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text);
+    }
+
+    .button-danger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(240, 71, 71, 0.1);
+        color: #f04747;
+        border: none;
+        border-radius: 6px;
+        padding: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .button-danger:hover {
+        background: rgba(240, 71, 71, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .accordion-content {
+        padding: 20px;
+        border-top: 1px solid var(--border-color);
+        color: var(--text-muted);
+        line-height: 1.6;
+        max-height: 0;
+        padding: 0 20px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease-out;
+    }
+
+    .accordion-item.expanded .accordion-content {
+        max-height: 1000px; /* Larger value to accommodate content */
+        padding: 20px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .add-memory-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .add-memory-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        font-size: 1rem;
+        background: var(--primary);
+        color: var(--text);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+    }
+
+    .add-memory-button:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+    }    /* Enhanced Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+
+    .modal.active {
+        display: flex;
+        opacity: 1;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: #1e1e2f;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        margin: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        transform: translateY(20px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal.active .modal-content {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+        background: linear-gradient(45deg, #fff, #7289da);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text);
+        transform: rotate(90deg);
+    }
+
+    .memory-form {
+        padding: 20px 25px;
+    }
+
+    .memory-form .form-group {
+        margin-bottom: 24px;
+    }
+
+    .memory-form .input {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #FFFFFF;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .memory-form textarea.input {
+        min-height: 120px;
+        max-height: 300px;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.5;
+    }
+
+    .memory-form .input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.15);
+    }
+
+    .memory-form label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: #FFFFFF;
+        font-size: 0.95rem;
+    }
+
+    .memory-form .input-description {
+        font-size: 0.85rem;
+        color: #8e8ea0;
+        margin-bottom: 8px;
+        line-height: 1.4;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .modal-actions .button {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .modal-actions .button-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text);
+    }
+
+    .modal-actions .button-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-actions .button-primary {
+        background: var(--primary);
+        border: none;
+        color: var(--text);
+        box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+    }
+
+    .modal-actions .button-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+    }
+
+    .guild-selector-label {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #FFFFFF !important; 
+    }
+
+    .guild-select-container {
+        color: #FFFFFF !important; 
+    }
+    
+    .guild-option-container {
+        color: #FFFFFF !important; 
+    }
+    
+
+    /* Modal Animation */
+    @keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes modalOut {
+        from {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('addMemoryModal');
+    const addButton = document.querySelector('.add-memory-button');
+    const closeButton = modal.querySelector('.modal-close');
+    const cancelButton = modal.querySelector('.cancel-button');
+    const memoryForm = document.getElementById('addMemoryForm');
+    const accordion = document.querySelector('.accordion');
+    
+    // Guild selector elements
+    const guildSelect = document.getElementById('guildSelect');
+    const guildSelectContainer = document.querySelector('.guild-select-container');
+    const guildOptionContainer = document.querySelector('.guild-option-container');
+    const selectedGuild = document.querySelector('.selected-guild');
+    const selectedGuildIcon = selectedGuild.querySelector('img');
+    const selectedGuildName = selectedGuild.querySelector('span');
+
+    // Handle click on the select container
+    guildSelectContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = guildOptionContainer.style.display === 'block';
+        guildOptionContainer.style.display = isVisible ? 'none' : 'block';
+    });
+
+    // Handle option selection
+    document.querySelectorAll('.guild-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const value = option.dataset.value;
+            const icon = option.querySelector('img').src;
+            const text = option.textContent.trim();
+
+            // Update the selected display
+            selectedGuildIcon.src = icon;
+            selectedGuildIcon.alt = text;
+            selectedGuildName.textContent = text;
+
+            // Update the hidden select
+            guildSelect.value = value;
+            guildSelect.dispatchEvent(new Event('change'));
+
+            // Hide dropdown
+            guildOptionContainer.style.display = 'none';
+        });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+        guildOptionContainer.style.display = 'none';
+    });
+
+    // Prevent native select from showing dropdown
+    guildSelect.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+    });
+
+    // Guild selection change handler
+    guildSelect.addEventListener('change', async function() {
+        const selectedGuildValue = this.value;
+        if (!selectedGuildValue) return;
+
+        try {
+            // TODO: Add API call to fetch memories for selected guild
+            const response = await fetch(`/api/{{nugget_alias}}/memories/${selectedGuildValue}`);
+            // const response = await fetch(`/api/{{nugget_alias}}/memories/1236174987325472768`);
+            const memories = await response.json();
+            updateMemoriesList(memories);
+        } catch (error) {
+            console.error('Error fetching guild memories:', error);
+        }
+    });
+
+    // Function to update memories list
+    function updateMemoriesList(memories) {
+        const accordion = document.querySelector('.accordion');
+        
+        // Animate out current items
+        const currentItems = accordion.querySelectorAll('.accordion-item');
+        const removePromises = Array.from(currentItems).map(item => {
+            return new Promise(resolve => {
+                item.style.transform = 'translateX(-20px)';
+                item.style.opacity = '0';
+                setTimeout(() => {
+                    item.remove();
+                    resolve();
+                }, 300);
+            });
+        });
+
+        // Wait for all items to be removed
+        Promise.all(removePromises).then(() => {
+            // Add new items with animation
+            memories.forEach((memory, index) => {
+                const newMemory = document.createElement('div');
+                newMemory.className = 'accordion-item';
+                newMemory.style.opacity = '0';
+                newMemory.style.transform = 'translateY(20px)';
+                newMemory.innerHTML = `
+                    <div class="accordion-header" memory_id="${memory.memory_id}">
+                        <span class="memory-title">${memory.special_phrase}</span>
+                        <button class="button-danger" aria-label="Delete memory">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="accordion-content">
+                        <p>${memory.memory}</p>
+                    </div>
+                `;
+
+                accordion.appendChild(newMemory);
+
+                // Stagger the animation of each item
+                setTimeout(() => {
+                    newMemory.style.opacity = '1';
+                    newMemory.style.transform = 'translateY(0)';
+                }, index * 100);
+
+                // Add delete functionality to new memory
+                const deleteBtn = newMemory.querySelector('.button-danger');
+                deleteBtn.addEventListener('click', handleMemoryDeletion);
+            });
+        });
+    }
+
+    // Function to handle memory deletion
+    function handleMemoryDeletion(e) {
+        e.stopPropagation();
+        const item = e.target.closest('.accordion-item');
+        
+        if (confirm('Are you sure you want to delete this memory? This action cannot be undone.')) {
+            item.style.transform = 'translateX(100%)';
+            item.style.opacity = '0';
+            
+            try {
+                const guildId = guildSelect.value;
+                const memoryTitle = item.querySelector('.memory-title').textContent;
+                
+                // TODO: Add API call to delete memory
+                // await fetch(`/api/memories/${guildId}/delete`, {
+                //     method: 'DELETE',
+                //     body: JSON.stringify({ title: memoryTitle }),
+                //     headers: { 'Content-Type': 'application/json' }
+                // });
+                
+                setTimeout(() => item.remove(), 300);
+            } catch (error) {
+                console.error('Error deleting memory:', error);
+                item.style.transform = '';
+                item.style.opacity = '';
+                alert('Failed to delete memory. Please try again.');
+            }
+        }
+    }
+
+    // Handle option selection with memory loading
+    document.querySelectorAll('.guild-option').forEach(option => {
+        option.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const value = option.dataset.value;
+            const icon = option.querySelector('img').src;
+            const text = option.textContent.trim();
+
+            // Update the selected display
+            selectedGuildIcon.src = icon;
+            selectedGuildIcon.alt = text;
+            selectedGuildName.textContent = text;
+
+            // Update the hidden select
+            guildSelect.value = value;
+
+            // Hide dropdown
+            guildOptionContainer.style.display = 'none';
+
+            try {
+
+            } catch (error) {
+                console.error('Error loading memories:', error);
+                alert('Failed to load memories. Please try again.');
+            }
+        });
+    });
+
+    // Modal handling
+    function openModal() {
+        modal.classList.add('active');
+        // Small delay to trigger transition
+        requestAnimationFrame(() => {
+            modal.style.opacity = '1';
+            modal.querySelector('.modal-content').style.transform = 'translateY(0)';
+            modal.querySelector('.modal-content').style.opacity = '1';
+        });
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        modal.style.opacity = '0';
+        modal.querySelector('.modal-content').style.transform = 'translateY(20px)';
+        modal.querySelector('.modal-content').style.opacity = '0';
+        
+        setTimeout(() => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            memoryForm.reset();
+        }, 300);
+    }
+
+    // Accordion functionality with smooth animations
+    function toggleAccordion(item) {
+        const content = item.querySelector('.accordion-content');
+        const isExpanded = item.classList.contains('expanded');
+        
+        // Close all other items
+        document.querySelectorAll('.accordion-item').forEach(otherItem => {
+            if (otherItem !== item && otherItem.classList.contains('expanded')) {
+                console.log("AAAAA")
+            }
+        });
+
+        // Toggle clicked item
+        if (!isExpanded) {
+            item.classList.add('expanded');
+            content.style.maxHeight = content.scrollHeight + 'px';
+        } else {
+            item.classList.remove('expanded');
+            content.style.maxHeight = '0';
+        }
+    }
+
+    // Event Listeners
+    addButton.addEventListener('click', openModal);
+    closeButton.addEventListener('click', closeModal);
+    cancelButton.addEventListener('click', closeModal);
+
+    // Close modal on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Handle accordion clicks
+    accordion.addEventListener('click', (e) => {
+        const header = e.target.closest('.accordion-header');
+        if (!header || e.target.closest('.button-danger')) return;
+        
+        const item = header.parentElement;
+        toggleAccordion(item);
+    });
+
+    // Handle memory deletion with animation
+    document.querySelectorAll('.button-danger').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const item = button.closest('.accordion-item');
+            
+            if (confirm('Are you sure you want to delete this memory? This action cannot be undone.')) {
+                item.style.transform = 'translateX(100%)';
+                item.style.opacity = '0';
+                
+                try {
+                    // TODO: Add API call to delete memory
+                    // await fetch('/api/memories/delete', {...});
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        item.remove();
+                    }, 300);
+                } catch (error) {
+                    console.error('Error deleting memory:', error);
+                    item.style.transform = '';
+                    item.style.opacity = '';
+                    alert('Failed to delete memory. Please try again.');
+                }
+            }
+        });
+    });
+
+    // Form submission with new memory animation
+    memoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+            title: document.getElementById('memoryTitle').value,
+            content: document.getElementById('memoryContent').value,
+        };
+
+        try {
+            // TODO: Add API call to save memory
+            const guildId = guildSelect.value;
+            
+            const memoryTitle = document.getElementById('memoryTitle').value
+            const memoryContent = document.getElementById('memoryContent').value
+
+            const response = await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {method : "POST", body: JSON.stringify({special_phrase: memoryTitle, memory: memoryContent}), headers: { 'Content-Type': 'application/json' }});
+            // await fetch(`/api/memories/${guildId}/delete`, {
+                //     method: 'DELETE',
+                //     body: JSON.stringify({ title: memoryTitle }),
+                //     headers: { 'Content-Type': 'application/json' }
+                // });
+            // Create new memory with animation
+            const newMemory = document.createElement('div');
+            newMemory.className = 'accordion-item';
+            newMemory.style.opacity = '0';
+            newMemory.style.transform = 'translateY(20px)';
+            newMemory.innerHTML = `
+                <div class="accordion-header">
+                    <span class="memory-title">${formData.title}</span>
+                    <button class="button-danger" aria-label="Delete memory">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="accordion-content">
+                    <p>${formData.content}</p>
+                </div>
+            `;
+            
+            // Add to DOM and animate in
+            accordion.insertBefore(newMemory, accordion.firstChild);
+            requestAnimationFrame(() => {
+                newMemory.style.opacity = '1';
+                newMemory.style.transform = 'translateY(0)';
+            });
+
+            // Add delete functionality to new memory
+            const deleteBtn = newMemory.querySelector('.button-danger');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Are you sure you want to delete this memory?')) {
+                    newMemory.style.transform = 'translateX(100%)';
+                    newMemory.style.opacity = '0';
+                    setTimeout(() => newMemory.remove(), 300);
+                }
+            });
+
+            closeModal();
+        } catch (error) {
+            console.error('Error saving memory:', error);
+            alert('Failed to save memory. Please try again.');
+        }
+    });
+
+    // Hide/show custom select options
+    guildSelect.addEventListener('focus', () => {
+        if (guildSelect.value) {
+            guildOptionContainer.style.display = 'block';
+        }
+    });
+
+    guildSelect.addEventListener('blur', () => {
+        setTimeout(() => {
+            guildOptionContainer.style.display = 'none';
+        }, 150);
+    });
+});
+</script>
+{% endblock %}

@@ -34,13 +34,13 @@ def callback():
     if error:
         logging.error(f"OAuth error: {error}")
         flash(f"Authentication error: {error}", "error")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("dashboard.home"))
 
     code = request.args.get("code")
     if not code:
         logging.error("No code received from Discord")
         flash("Authentication failed - no code received", "error")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("dashboard.home"))
 
     data = {
         "client_id": CLIENT_ID,

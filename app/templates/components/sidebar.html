@@ -102,6 +102,12 @@
                     <span class="nav-link-text">Agent Module</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="/dashboard/{{ nugget_alias }}/features/memory" class="nav-link {% if active_page == 'memories' %}active{% endif %}">
+                    <i class="fas fa-memory nav-link-icon"></i>
+                    <span class="nav-link-text">Memories</span>
+                </a>
+            </li>
         </ul>
     </nav>
 
@@ -113,12 +119,6 @@
                 <a href="/dashboard/{{ nugget_alias }}/knowledge" class="nav-link {% if active_page == 'knowledge' %}active{% endif %}">
                     <i class="fas fa-book nav-link-icon"></i>
                     <span class="nav-link-text">Knowledge Base</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/dashboard/{{ nugget_alias }}/memories" class="nav-link {% if active_page == 'memories' %}active{% endif %}">
-                    <i class="fas fa-memory nav-link-icon"></i>
-                    <span class="nav-link-text">Memories</span>
                 </a>
             </li>
         </ul>

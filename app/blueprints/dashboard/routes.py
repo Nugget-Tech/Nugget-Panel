@@ -316,6 +316,24 @@ def personality_autonomy(nugget):
 
 
 # Features routes
+
+
+@dashboard_bp.route("/<nugget>/features/memory")
+@Helpers.requires_auth
+def memory_config(nugget):
+    user_data = Helpers.get_user_data()
+    bot_guilds = Helpers.get_guilds()
+
+    return render_template(
+        "dashboard/ai/memories.html",
+        nugget_alias=nugget,
+        username=user_data["username"],
+        avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        guilds=Helpers.get_bot_guilds(nugget),
+        # we need to firstly fetch the guilds from the bots, then fetch guilds from the user, merge the common ones into one list
+    )
+
+
 @dashboard_bp.route("/<nugget>/features/agent")
 @Helpers.requires_auth
 def features_agent(nugget):

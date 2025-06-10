@@ -103,3 +103,23 @@ def delete_bot(bot_name):
             return jsonify({"error": "Failed to delete bot"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route("/<nugget>/memories/<guild_id>", methods=["GET", "POST"])
+def memories(nugget, guild_id: str):
+    # fetch the memory by first locating the bot's port on spine core, fetch the memories from /memories.
+    if request.method == "GET":
+        memories = Helpers.get_memories(nugget)
+        # now time to search by guild
+        # simple index
+        return jsonify(
+            memories.get(
+                str(guild_id), {"message": f"No memories found for {guild_id}"}
+            )
+        )
+    if request.method == "POST":
+        # do something
+        print(request.json)
+        # generate a uuid for it and send it to the bot
+        Helpers.save_memory()
+        return jsonify({"message": "got it"})

@@ -167,7 +167,7 @@ body {
     --text: #FFFFFF;
     --text-muted: #b4b4d1;
     --text-description: #8e8ea0;
-    --bg-main: #1a1b2e;
+    /* --bg-main: #1a1b2e; */
     --bg-card: rgba(255, 255, 255, 0.05);
     --border-color: rgba(255, 255, 255, 0.1);
     --hover-shadow: rgba(0, 0, 0, 0.2);

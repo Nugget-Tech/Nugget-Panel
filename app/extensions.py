@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import os
 import docker
 import re
+import datetime
 
 docker_client = docker.from_env()
 
@@ -63,9 +64,19 @@ class Helpers:
     def get_user_data():
         headers = {"Authorization": f"Bearer {session['token']}"}
         response = requests.get(f"{API_BASE_URL}/users/@me", headers=headers)
+        guilds = requests.get(f"{API_BASE_URL}/users/@me/guilds", headers=headers)
+        guilds = guilds.json()
         user_data = response.json()
         print("User data: ", user_data)
         return user_data
+
+    def get_guilds():
+        headers = {"Authorization": f"Bearer {session['token']}"}
+        guilds = requests.get(f"{API_BASE_URL}/users/@me/guilds", headers=headers)
+        guilds = guilds.json()
+        return guilds
+
+    # https://cdn.discordapp.com/icons/<guild_id>/<guild_icon_hash>.png
 
     def list_nuggets():
         try:
@@ -135,6 +146,8 @@ class Helpers:
 
     def _create_bot_container(bot_data, secret_data):
         container = None
+        base_port = 10000
+        port = base_port + hash(bot_data["alias"]) % 10000
         try:
             # Run the bot container with the volume
             container = docker_client.containers.run(
@@ -147,7 +160,7 @@ class Helpers:
                         "mode": "rw",
                     }
                 },
-                ports={"8000/tcp": None},  # Dynamically assign a host port
+                ports={"8000/tcp": port},  # Dynamically assign a host port
                 detach=True,  # Run in background
                 environment={
                     "BOT_ID": bot_data["alias"],
@@ -207,56 +220,60 @@ class Helpers:
             return False
 
     def save_config(bot_name, config):
-        with open("./data/bots.json", "r") as ul_bots_file:
-            bots_file: dict = json.load(ul_bots_file)
-            for bot in bots_file:
-                if bot["alias"] == bot_name:
-                    # meaning we've found the bot
-                    url = f"http://localhost:{bot['port']}"
+        """Save configuration for a bot"""
         try:
-            # Try to load existing config
-            existing_config = {}
-            config_path = f"{SETTINGS_DATA_DIR}/{bot_name}.json"
-            if Path(config_path).exists():
-                with open(config_path, "r") as json_file:
-                    existing_config = json.load(json_file)
+            # Find bot in bots.json to get URL
+            bots_file_path = DATA_DIR / "bots.json"
+            with open(bots_file_path, "r") as ul_bots_file:
+                bots_file = json.load(ul_bots_file)
+                url = None
+                for bot in bots_file:
+                    if bot["alias"] == bot_name:
+                        url = f"http://localhost:{bot['port']}"
+                        break
 
-            # Update existing config with new data
-            if isinstance(config, dict):
-                existing_config.update(config)
-                requests.post(
-                    f"{url}/event", json={"type": "update_config", "config": config}
-                )
-            else:
-                # If config is not a dict, try to parse it as JSON first
+            if not url:
+                logger.error(f"Bot {bot_name} not found in bots.json")
+                raise ValueError(f"Bot {bot_name} not found")
+
+            # Ensure config is a dict
+            if not isinstance(config, dict):
                 try:
-                    config_dict = (
-                        json.loads(config) if isinstance(config, str) else config
-                    )
-                    existing_config.update(config_dict)
-                    requests.post(
-                        f"{url}/event", json={"type": "update_config", "config": config}
+                    config = (
+                        json.loads(config)
+                        if isinstance(config, str)
+                        else {"config": config}
                     )
                 except (json.JSONDecodeError, AttributeError):
-                    # If parsing fails, store it as is under a default key
-                    existing_config["config"] = config
+                    config = {"config": config}
 
-                # Save the merged config
-                with open(config_path, "w") as json_file:
-                    json.dump(existing_config, json_file, indent=4)
+            # Save config directly to settings/{bot_id}.json
+            config_path = SETTINGS_DATA_DIR / f"{bot_name}.json"
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(config_path, "w") as json_file:
+                json.dump(config, json_file, indent=4)
+
+            # Notify bot of config update
+            requests.post(
+                f"{url}/event",
+                json={"type": "update_config", "config": config},
+                timeout=5,
+            )
 
         except Exception as e:
             logger.error(f"Error saving config for {bot_name}: {e}")
             raise
 
     def get_config(bot_name):
+        """Get configuration for a bot"""
         try:
-            with open(f"{SETTINGS_DATA_DIR}/{bot_name}.json", "r") as json_file:
+            config_path = SETTINGS_DATA_DIR / f"{bot_name}.json"
+            if not config_path.exists():
+                return {}
+            with open(config_path, "r") as json_file:
                 return json.load(json_file)
-        except FileNotFoundError:
-            return {}
-        except json.JSONDecodeError as e:
-            logger.error(f"Error parsing config for {bot_name}: {e}")
+        except Exception as e:
+            logger.error(f"Error getting config for {bot_name}: {e}")
             return {}
 
     def save_personality(bot_name, personality):
@@ -435,6 +452,78 @@ class Helpers:
                 else:
                     merged[key] = value
         return merged
+
+    def get_memories(bot_name) -> dict:
+        # Find bot in bots.json to get URL
+        bots_file_path = DATA_DIR / "bots.json"
+        with open(bots_file_path, "r") as ul_bots_file:
+            bots_file = json.load(ul_bots_file)
+            url = None
+            for bot in bots_file:
+                if bot["alias"] == bot_name:
+                    url = f"http://localhost:{bot['port']}"
+                    break
+
+        if not url:
+            logger.error(f"Bot {bot_name} not found in bots.json")
+            raise ValueError(f"Bot {bot_name} not found")
+
+        return json.loads(requests.get(f"{url}/memories").text)
+
+    def get_bot_guilds(bot_name):
+        bots_file_path = DATA_DIR / "bots.json"
+        with open(bots_file_path, "r") as ul_bots_file:
+            bots_file = json.load(ul_bots_file)
+            url = None
+            for bot in bots_file:
+                if bot["alias"] == bot_name:
+                    url = f"http://localhost:{bot['port']}"
+                    break
+
+        if not url:
+            logger.error(f"Bot {bot_name} not found in bots.json")
+            raise ValueError(f"Bot {bot_name} not found")
+
+        return json.loads(requests.get(f"{url}/guilds").text)
+
+    def save_memory(bot_name, special_phrase, memory_content):
+        # Find bot in bots.json to get URL
+        bots_file_path = DATA_DIR / "bots.json"
+        with open(bots_file_path, "r") as ul_bots_file:
+            bots_file = json.load(ul_bots_file)
+            url = None
+            for bot in bots_file:
+                if bot["alias"] == bot_name:
+                    url = f"http://localhost:{bot['port']}"
+                    break
+
+        if not url:
+            logger.error(f"Bot {bot_name} not found in bots.json")
+            raise ValueError(f"Bot {bot_name} not found")
+
+        # Send POST request to /event endpoint with update_memory event
+        response = requests.post(
+            f"{url}/event",
+            json={
+                "type": "update_memory",
+                "memory": {
+                    "uuid": str(uuid.uuid4()),
+                    "special_phrase": special_phrase,
+                    "content": memory_content,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                },
+            },
+            timeout=5,
+        )
+        return json.loads(response.text)
+
+    def save_to_memory(bot_name, special_phrase, memory_content):
+        """Save memory content for a bot"""
+        try:
+            return Helpers._save_memory(bot_name, special_phrase, memory_content)
+        except Exception as e:
+            logger.error(f"Error saving memory for {bot_name}: {e}")
+            raise
 
 
 # Initialize settings manager
