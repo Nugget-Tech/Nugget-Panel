@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, redirect
 from ...extensions import Helpers, PERSONALITY_DATA_DIR
 import json
 import datetime
@@ -55,7 +55,7 @@ def configure_bot(nugget):
 
 
 @api_bp.route("/bots", methods=["POST"])
-# @Helpers.requires_auth
+@Helpers.requires_auth
 def add_bot():
     try:
         data = request.json
@@ -105,21 +105,68 @@ def delete_bot(bot_name):
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route("/<nugget>/memories/<guild_id>", methods=["GET", "POST"])
+@api_bp.route("/<nugget>/memories/<guild_id>", methods=["GET", "POST", "DELETE", "PUT"])
+@Helpers.requires_auth
 def memories(nugget, guild_id: str):
     # fetch the memory by first locating the bot's port on spine core, fetch the memories from /memories.
-    if request.method == "GET":
-        memories = Helpers.get_memories(nugget)
-        # now time to search by guild
-        # simple index
-        return jsonify(
-            memories.get(
-                str(guild_id), {"message": f"No memories found for {guild_id}"}
+    match request.method:
+        case "GET":
+            memories = Helpers.get_memories(nugget)
+            # now time to search by guild
+            # simple index
+            return jsonify(
+                memories.get(
+                    str(guild_id), {"message": f"No memories found for {guild_id}"}
+                )
             )
-        )
-    if request.method == "POST":
-        # do something
-        print(request.json)
-        # generate a uuid for it and send it to the bot
-        Helpers.save_memory()
-        return jsonify({"message": "got it"})
+        case "POST":
+            # do something
+            special_phrase = request.get_json()["special_phrase"]
+            memory_content = request.get_json()["memory"]
+            # generate a uuid for it and send it to the bot
+            (response_message, memory_id) = Helpers.save_memory(
+                bot_name=nugget,
+                guild_id=guild_id,
+                memory_id="",
+                special_phrase=special_phrase,
+                memory_content=memory_content,
+            )
+            return jsonify(
+                {"message": f"{memory_id} Saved.", "spine_response": response_message}
+            )
+
+        case "DELETE":
+            guild_id = request.get_json()["guild_id"]
+            memory_id = request.get_json()["memory_id"]
+
+            Helpers.delete_memory(
+                bot_name=nugget, guild_id=guild_id, memory_id=memory_id
+            )
+
+            return jsonify(
+                {
+                    "message": f"{memory_id} has been deleted.",
+                }
+            )
+
+        case "PUT":
+            # do something
+            special_phrase = request.get_json()["special_phrase"]
+            memory_content = request.get_json()["memory"]
+            # generate a uuid for it and send it to the bot
+            (response_message, memory_id) = Helpers.save_memory(
+                bot_name=nugget,
+                guild_id=guild_id,
+                memory_id=request.get_json()["memory_id"],
+                special_phrase=special_phrase,
+                memory_content=memory_content,
+            )
+            return jsonify(
+                {"message": f"{memory_id} Saved.", "spine_response": response_message}
+            )
+
+
+@api_bp.route("/invite/<nugget>")
+@Helpers.requires_auth
+def invite_nugget(nugget):
+    return redirect(Helpers.fetch_invite(nugget))

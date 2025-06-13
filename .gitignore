@@ -1,1 +1,6 @@
-.env
+*.env
+security.txt
+data/personality_traits/*
+data/settings/*
+__pycache__
+site-theme.txt

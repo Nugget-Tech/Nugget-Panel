@@ -349,7 +349,7 @@ class Helpers:
             logger.error(f"Error parsing personality for {bot_name}: {e}")
             return {}
 
-    def transform_bot_json(input_json):
+    def transform_bot_json(input_json, bot_name):
         """Keep as internal function"""
         # Extract all example indices
         example_pattern = re.compile(r"examples\[(\d+)\]\.(user|bot)")
@@ -385,6 +385,10 @@ class Helpers:
             "system_note": input_json.get("systemNote", ""),
             "conversation_examples": conversation_examples,
         }
+
+        personality_file = PERSONALITY_DATA_DIR / f"{bot_name}.json"
+        with open(personality_file, "w") as f:
+            json.dump(output_json, f, indent=4)
 
         return output_json
 
@@ -486,7 +490,7 @@ class Helpers:
 
         return json.loads(requests.get(f"{url}/guilds").text)
 
-    def save_memory(bot_name, special_phrase, memory_content):
+    def save_memory(bot_name, guild_id, special_phrase, memory_content, memory_id):
         # Find bot in bots.json to get URL
         bots_file_path = DATA_DIR / "bots.json"
         with open(bots_file_path, "r") as ul_bots_file:
@@ -502,28 +506,79 @@ class Helpers:
             raise ValueError(f"Bot {bot_name} not found")
 
         # Send POST request to /event endpoint with update_memory event
+        if memory_id == None or memory_id == "":
+            memory_uuid = str(uuid.uuid4())
+        else:
+            memory_uuid = memory_id
         response = requests.post(
             f"{url}/event",
             json={
                 "type": "update_memory",
                 "memory": {
-                    "uuid": str(uuid.uuid4()),
-                    "special_phrase": special_phrase,
-                    "content": memory_content,
-                    "timestamp": datetime.datetime.now().isoformat(),
+                    f"{guild_id}": [
+                        {
+                            "guild_id": guild_id,
+                            "memory_id": memory_uuid,
+                            "special_phrase": special_phrase,
+                            "memory": memory_content,
+                            "timestamp": datetime.datetime.now().isoformat(),
+                        }
+                    ],
                 },
             },
-            timeout=5,
         )
-        return json.loads(response.text)
+        return json.loads(response.text), memory_id
 
-    def save_to_memory(bot_name, special_phrase, memory_content):
-        """Save memory content for a bot"""
-        try:
-            return Helpers._save_memory(bot_name, special_phrase, memory_content)
-        except Exception as e:
-            logger.error(f"Error saving memory for {bot_name}: {e}")
-            raise
+    def delete_memory(bot_name, guild_id, memory_id):
+        # Find bot in bots.json to get URL
+        bots_file_path = DATA_DIR / "bots.json"
+        with open(bots_file_path, "r") as ul_bots_file:
+            bots_file = json.load(ul_bots_file)
+            url = None
+            for bot in bots_file:
+                if bot["alias"] == bot_name:
+                    url = f"http://localhost:{bot['port']}"
+                    break
+
+        if not url:
+            logger.error(f"Bot {bot_name} not found in bots.json")
+            raise ValueError(f"Bot {bot_name} not found")
+
+        # Send POST request to /event endpoint with update_memory event
+
+        response = requests.post(
+            f"{url}/event",
+            json={
+                "type": "delete_memory",
+                "memory": {
+                    f"{guild_id}": [
+                        {
+                            "memory_id": memory_id,
+                        }
+                    ],
+                },
+            },
+        )
+        print(response.text)
+        return jsonify({"memory_id": memory_id, "response": str(response.json)})
+
+    def fetch_invite(bot_name):
+        bots_file_path = DATA_DIR / "bots.json"
+        with open(bots_file_path, "r") as ul_bots_file:
+            bots_file = json.load(ul_bots_file)
+            url = None
+            for bot in bots_file:
+                if bot["alias"] == bot_name:
+                    url = f"http://localhost:{bot['port']}"
+                    break
+
+        if not url:
+            logger.error(f"Bot {bot_name} not found in bots.json")
+            raise ValueError(f"Bot {bot_name} not found")
+
+        response = requests.get(f"{url}/bot-details")
+        print(response)
+        return f"https://discord.com/oauth2/authorize?client_id={response.json().get("bot_id")}&permissions=309240907840&integration_type=0&scope=bot"
 
 
 # Initialize settings manager
