@@ -2,5 +2,7 @@
 security.txt
 data/personality_traits/*
 data/settings/*
-*/__pycache__
+**/__pycache__/
+*.py[cod]
+*$py.class
 site-theme.txt
