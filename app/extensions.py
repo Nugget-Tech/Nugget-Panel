@@ -578,7 +578,7 @@ class Helpers:
 
         response = requests.get(f"{url}/bot-details")
         print(response)
-        return f"https://discord.com/oauth2/authorize?client_id={response.json().get("bot_id")}&permissions=309240907840&integration_type=0&scope=bot"
+        return f"""https://discord.com/oauth2/authorize?client_id={response.json().get("bot_id")}&permissions=309240907840&integration_type=0&scope=bot"""
 
 
 # Initialize settings manager
