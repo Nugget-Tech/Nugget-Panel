@@ -295,7 +295,7 @@ class Helpers:
             if isinstance(personality, dict):
                 existing_personality.update(personality)
                 partial_transformed_personality = Helpers.transform_bot_json(
-                    personality
+                    input_json=personality, bot_name=bot_name
                 )
                 requests.post(
                     f"{url}/event",
@@ -316,7 +316,7 @@ class Helpers:
                     )
                     existing_personality.update(personality_dict)
                     partial_transformed_personality = Helpers.transform_bot_json(
-                        personality_dict
+                        input_json=personality_dict, bot_name=bot_name
                     )
                     requests.post(
                         f"{url}/event",
