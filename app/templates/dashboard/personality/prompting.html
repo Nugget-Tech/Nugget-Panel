@@ -197,13 +197,62 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const examplesContainer = document.getElementById('conversationExamples');
     const addButton = document.getElementById('addExample');
-    let exampleCount = 0; // Starting with 2 examples
+    let exampleCount = 0;
+
+    // Assuming Flask injects `settings` into the template like this:
+    const settings = {{ settings | tojson }};
+
+    // Load existing examples from settings
+    function loadExistingExamples() {
+        const examples = [];
+
+        // Reconstruct indexed examples from flat key structure
+        for (const key in settings) {
+            const match = key.match(/^examples\[(\d+)\]\.(user|bot)$/);
+            if (match) {
+                const index = parseInt(match[1]);
+                const type = match[2];
+                if (!examples[index]) examples[index] = {};
+                examples[index][type] = settings[key];
+            }
+        }
+
+        examples.forEach((example, i) => {
+            const newExample = document.createElement('div');
+            newExample.className = 'conversation-example';
+            newExample.innerHTML = `
+                <div class="example-header">
+                    <h3>Example ${i + 1}</h3>
+                    <button type="button" class="button button-icon delete-example">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label>User Message</label>
+                    <textarea class="input textarea" name="examples[${i}].user" rows="2"
+                           placeholder="What the user says...">${example.user || ''}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Bot Response</label>
+                    <textarea class="input textarea" name="examples[${i}].bot" rows="3"
+                           placeholder="How your bot should respond...">${example.bot || ''}</textarea>
+                </div>
+            `;
+            examplesContainer.appendChild(newExample);
+            exampleCount++;
+        });
+
+        // If no examples exist, create one empty by default
+        if (exampleCount === 0) addButton.click();
+    }
 
     // Add new example
-    addButton.addEventListener('click', function() {
+    addButton.addEventListener('click', function () {
         const newExample = document.createElement('div');
         newExample.className = 'conversation-example';
         newExample.innerHTML = `
@@ -213,13 +262,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
-            
+
             <div class="form-group">
                 <label>User Message</label>
                 <textarea class="input textarea" name="examples[${exampleCount}].user" rows="2"
                        placeholder="What the user says..."></textarea>
             </div>
-            
+
             <div class="form-group">
                 <label>Bot Response</label>
                 <textarea class="input textarea" name="examples[${exampleCount}].bot" rows="3"
@@ -231,28 +280,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Delete example
-    examplesContainer.addEventListener('click', function(e) {
+    examplesContainer.addEventListener('click', function (e) {
         if (e.target.closest('.delete-example')) {
             const example = e.target.closest('.conversation-example');
-            if (examplesContainer.children.length > 1) { // Keep at least one example
+            if (examplesContainer.children.length > 1) {
                 example.remove();
                 updateExampleNumbers();
             }
         }
     });
 
-    // Update example numbers after deletion
+    // Update numbers after deletion
     function updateExampleNumbers() {
         const examples = examplesContainer.getElementsByClassName('conversation-example');
         Array.from(examples).forEach((example, index) => {
             example.querySelector('h3').textContent = `Example ${index + 1}`;
             example.querySelectorAll('textarea').forEach(textarea => {
-                const name = textarea.name.replace(/\[\d+\]/, `[${index}]`);
-                textarea.name = name;
+                textarea.name = textarea.name.replace(/\[\d+\]/, `[${index}]`);
             });
         });
         exampleCount = examples.length;
     }
+
+    // Initialize
+    loadExistingExamples();
 });
 </script>
 {% endblock %}

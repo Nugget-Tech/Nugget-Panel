@@ -196,19 +196,6 @@ def ai_model(nugget):
     )
 
 
-@dashboard_bp.route("/<nugget>/ai/prompting")
-@Helpers.requires_auth
-def prompting(nugget):
-
-    user_data = Helpers.get_user_data()
-    return render_template(
-        "dashboard/ai/prompting.html",
-        nugget_alias=nugget,
-        username=user_data["username"],
-        avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
-    )
-
-
 @dashboard_bp.route("/<nugget>/ai/messages")
 @Helpers.requires_auth
 def ai_messages(nugget):
@@ -254,7 +241,7 @@ def personality_traits(nugget):
         print("Checking to see which item is not none")
         new_personality = {}
         for item in request.args:
-            if request.args.get(item) != "":
+            if request.args.get(item) != "" or request.args.get(item) == None:
                 new_personality[item] = request.args.get(item)
         Helpers.save_personality(nugget, personality=new_personality)
     return render_template(
@@ -278,7 +265,7 @@ def personality_prompting(nugget):
         print("Checking to see which item is not none")
         new_personality = {}
         for item in request.args:
-            if request.args.get(item) != "":
+            if request.args.get(item) != "" or request.args.get(item) == None:
                 new_personality[item] = request.args.get(item)
         Helpers.save_personality(nugget, personality=new_personality)
     return render_template(
@@ -310,7 +297,6 @@ def personality_autonomy(nugget):
         new_config = {}
         for item in request.args:
             if request.args.get(item) != "":
-
                 new_config[item] = request.args.get(item)
         Helpers.save_config(nugget, config=new_config)
     return render_template(
@@ -336,30 +322,6 @@ def memory_config(nugget):
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
         guilds=Helpers.get_bot_guilds(nugget),
         # we need to firstly fetch the guilds from the bots, then fetch guilds from the user, merge the common ones into one list
-    )
-
-
-@dashboard_bp.route("/<nugget>/features/agent")
-@Helpers.requires_auth
-def features_agent(nugget):
-    user_data = Helpers.get_user_data()
-    return render_template(
-        "dashboard/features/agent.html",
-        nugget_alias=nugget,
-        username=user_data["username"],
-        avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
-    )
-
-
-@dashboard_bp.route("/<nugget>/features/files")
-@Helpers.requires_auth
-def features_files(nugget):
-    user_data = Helpers.get_user_data()
-    return render_template(
-        "dashboard/features/files.html",
-        nugget_alias=nugget,
-        username=user_data["username"],
-        avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
     )
 
 

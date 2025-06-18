@@ -71,4 +71,4 @@ def callback():
             f"Response content: {response.content if 'response' in locals() else 'No response'}"
         )
         flash("Authentication failed - please try again", "error")
-        return redirect(url_for("main.index"))
+        return redirect("/dashboard/home")

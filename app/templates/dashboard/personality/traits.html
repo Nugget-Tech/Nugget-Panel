@@ -26,8 +26,8 @@
                     <label for="age">Age</label>
                     <div class="input-description">Bot's perceived or roleplay age</div>
                     <div class="input-with-suffix">
-                        <input type="number" class="input number" id="age" name="age" 
-                               value="{{ settings.get('age', '') }}" min="0">
+                        <input class="input" id="age" name="age" 
+                               value="{{ settings.get('age', '100') }}">
                         <span class="input-suffix">years</span>
                     </div>
                 </div>

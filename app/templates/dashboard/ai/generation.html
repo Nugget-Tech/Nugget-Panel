@@ -31,7 +31,7 @@
                     <div class="input-description">Nucleus sampling threshold. Lower values make output more focused.</div>
                     <div class="input-with-suffix">
                         <input type="number" class="input number" id="topP" name="topP" 
-                               value="{{ settings.get("topP", '0.95') }}" min="0" max="1" step="0.01">
+                               value="{{ settings.get('topP', '0.95') }}" min="0" max="1" step="0.01">
                         <span class="input-suffix">0-1</span>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                     <div class="input-description">Limits vocabulary to top K tokens. Lower values make output more predictable.</div>
                     <div class="input-with-suffix">
                         <input type="number" class="input number" id="topK" name="topK" 
-                               value="{{ settings.get("topP", '0.75') }}" min="1" max="100">
+                               value="{{ settings.get('topP', '0.75') }}" max="100">
                         <span class="input-suffix">tokens</span>
                     </div>
                 </div>

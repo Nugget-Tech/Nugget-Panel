@@ -13,7 +13,6 @@ import datetime
 
 docker_client = docker.from_env()
 
-
 load_dotenv()
 
 # Configure logging
@@ -75,8 +74,6 @@ class Helpers:
         guilds = requests.get(f"{API_BASE_URL}/users/@me/guilds", headers=headers)
         guilds = guilds.json()
         return guilds
-
-    # https://cdn.discordapp.com/icons/<guild_id>/<guild_icon_hash>.png
 
     def fetch_port(bot_name, host="http://localhost"):
         bots_file_path = DATA_DIR / "bots.json"
@@ -319,7 +316,13 @@ class Helpers:
                 partial_transformed_personality = Helpers.transform_bot_json(
                     input_json=personality, bot_name=bot_name
                 )
-                print(partial_transformed_personality)
+                print("transformed", partial_transformed_personality)
+
+                partial_split_personality = Helpers.split_personality_updates(
+                    partial_transformed_personality
+                )
+                print("split", partial_split_personality)
+
                 requests.post(
                     f"{url}/event",
                     json={
@@ -339,7 +342,11 @@ class Helpers:
                     partial_transformed_personality = Helpers.transform_bot_json(
                         input_json=personality_dict, bot_name=bot_name
                     )
-                    print(partial_transformed_personality)
+                    print("transformed", partial_transformed_personality)
+                    partial_split_personality = Helpers.split_personality_updates(
+                        partial_transformed_personality
+                    )
+                    print("split", partial_split_personality)
 
                     requests.post(
                         f"{url}/event",
@@ -360,50 +367,6 @@ class Helpers:
             logger.error(f"Error saving personality for {bot_name}: {e}")
             raise
 
-    def _transform_bot_json(input_json, bot_name):
-        """Keep as internal function"""
-        print(input_json)
-        # Extract all example indices
-        example_pattern = re.compile(r"examples\[(\d+)\]\.(user|bot)")
-        example_indices = set()
-
-        for key in input_json.keys():
-            match = example_pattern.match(key)
-            if match:
-                example_indices.add(int(match.group(1)))
-
-        # Build conversation examples sorted by index
-        conversation_examples = []
-        for i in sorted(example_indices):
-            user_key = f"examples[{i}].user"
-            bot_key = f"examples[{i}].bot"
-            conversation_examples.append(
-                {
-                    "user": input_json.get(user_key, ""),
-                    "bot": input_json.get(bot_key, ""),
-                }
-            )
-
-        # Compose output JSON
-        output_json = {
-            "personality_traits": {
-                "name": input_json.get("name", ""),
-                "age": int(input_json.get("age", 0)),
-                "role": input_json.get("role", ""),
-                "description": input_json.get("description", ""),
-                "likes": input_json.get("likes", ""),
-                "dislikes": input_json.get("dislikes", ""),
-            },
-            "system_note": input_json.get("systemNote", ""),
-            "conversation_examples": conversation_examples,
-        }
-
-        personality_file = PERSONALITY_DATA_DIR / f"{bot_name}.json"
-        with open(personality_file, "w") as f:
-            json.dump(output_json, f, indent=4)
-
-        return output_json
-
     def transform_bot_json(input_json, bot_name):
         """Keep as internal function"""
         print(input_json)
@@ -412,7 +375,7 @@ class Helpers:
         example_pattern = re.compile(r"examples\[(\d+)\]\.(user|bot)")
         example_indices = set()
 
-        for key in input_json.keys():
+        for key in input_json:
             match = example_pattern.match(key)
             if match:
                 example_indices.add(int(match.group(1)))
@@ -423,33 +386,32 @@ class Helpers:
             for i in sorted(example_indices):
                 user_key = f"examples[{i}].user"
                 bot_key = f"examples[{i}].bot"
-                conversation_examples.append(
-                    {
-                        "user": input_json.get(user_key, ""),
-                        "bot": input_json.get(bot_key, ""),
-                    }
-                )
+                example = {}
+                if user_key in input_json:
+                    example["user"] = input_json[user_key]
+                if bot_key in input_json:
+                    example["bot"] = input_json[bot_key]
+                if example:
+                    conversation_examples.append(example)
 
         # Compose output JSON
-        output_json = {
-            "personality_traits": {
-                "name": input_json.get("name"),
-                "age": int(input_json["age"]) if "age" in input_json else None,
-                "role": input_json.get("role"),
-                "description": input_json.get("description"),
-                "likes": input_json.get("likes"),
-                "dislikes": input_json.get("dislikes"),
-            }
-        }
+        output_json = {}
 
-        # Optionally add system_note if present
+        # Only include non-empty personality_traits
+        traits_keys = ["name", "age", "role", "description", "likes", "dislikes"]
+        personality_traits = {k: input_json[k] for k in traits_keys if k in input_json}
+        if personality_traits:
+            output_json["personality_traits"] = personality_traits
+
+        # Only add system_note if present
         if "systemNote" in input_json:
             output_json["system_note"] = input_json["systemNote"]
 
-        # Only add conversation_examples if they exist
+        # Only add conversation_examples if populated
         if conversation_examples:
             output_json["conversation_examples"] = conversation_examples
 
+        # Save result to file
         personality_file = PERSONALITY_DATA_DIR / f"{bot_name}.json"
         with open(personality_file, "w") as f:
             json.dump(output_json, f, indent=4)
