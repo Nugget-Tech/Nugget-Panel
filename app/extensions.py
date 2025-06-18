@@ -144,6 +144,44 @@ class Helpers:
             with open(BOTS_FILE, "w") as f:
                 json.dump(bots, f, indent=4)
                 logger.info(f"Successfully saved bots to {BOTS_FILE}")
+                f.close()
+
+            with open(
+                f"{SETTINGS_DATA_DIR}/{bot_data['alias']}.json", "w"
+            ) as dumpndash:
+                # put the default settings (stolen from the bot itself)
+                default_config_json = {
+                    "aiModel": "models/gemini-2.0-flash-lite",
+                    "maxContext": "20",
+                    "filterSexuallyExplicit": "BLOCK_NONE",
+                    "filterHarassment": "BLOCK_NONE",
+                    "filterDangerous": "BLOCK_NONE",
+                    "filterHateSpeech": "BLOCK_NONE",
+                    "filterUnspecified": "BLOCK_MEDIUM_AND_ABOVE",
+                    "temperature": "0",
+                    "topP": "0.95",
+                    "topK": "40",
+                    "memoryWindow": "50",
+                    "contextWindow": "8192",
+                    "wack_message": "Ow! Uhh, what were we talking about?",
+                    "wack_error": "Sorry, can't remove what's not there. :joy:",
+                    "error_message": "Nuh uh, not gonna happen.",
+                    "activate_message": "Hey! I'm new here :wave:",
+                    "deactivate_message": "Awh, sorry to see you go! You can still talk to me by pinging me :pleading_face:",
+                    "voiceModel": "eleven_flash_v2_5",
+                    "recording-time": "10",
+                    "deepContext": "on",
+                    "freewill": "off",
+                    "textFrequency": "0",
+                    "keywordChance": "0",
+                    "keywords": [],
+                    "voiceMessages": "off",
+                    "voiceMessageConvo": "on",
+                    "voiceChance": "100",
+                    "JustGetRidOfTheName": "on",
+                    "debugMode": "off",
+                }
+                json.dump(default_config_json, dumpndash, indent=4)
 
             return (
                 True,

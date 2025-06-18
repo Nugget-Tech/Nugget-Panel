@@ -46,10 +46,12 @@ def home():
 def dashboard(nugget):
     user_data = Helpers.get_user_data()
     return render_template(
-        "dashboard/analytics-page.html",
+        "dashboard/dashboard.html",
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        personality=Helpers.get_personality(bot_name=nugget),
+        settings=Helpers.get_config(bot_name=nugget),
     )
 
 

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% from "components/save-button.html" import save_button %}
+
+
+{% block title %}Analytics Dashboard - Nugget Tech{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-content">
+    <div class="page-header">
+        <h2>At a glance</h2>
+        <p class="page-description">Monitor your bot's status, errors, and quick selects for beta features</p>
+    </div>
+
+    <form class="BetaFeatures" id="BetaFeatures">
+    <div class="settings-group">
+        <div class="settings-card">
+            <div class="form-group">
+            
+                <label for="debugMode" class="switch-label">
+
+                    <div class="switch-label-text">Debug mode <i class="fa-solid fa-code"></i></div>
+
+                    <div class="switch">
+                        <input type="checkbox" id="debugMode" name="debugMode">
+                        <span class="slider"></span>
+                    </div>
+                
+                </label>
+                <div class="input-description">Allows nugget to print exceptions directly into discord, additionally it adds additional verbosity to nugget's stdout (beta)</div>    
+            
+                <label for="JustGetRidOfTheName" class="switch-label">
+                    
+                    <div class="switch-label-text">JustGetRidOfTheName <i class="fa-solid fa-vial"></i></div>
+
+                    <div class="switch">
+                        <input type="checkbox" id="JustGetRidOfTheName" name="JustGetRidOfTheName">
+                        <span class="slider"></span>
+                    </div>
+                
+                </label>
+                <div class="input-description">Frustrated because {{ personality.get("name") }} keeps prepending it's name to the message? wanna get rid of it no matter what? this feature flag statically removes any name you set for the bot.</div>    
+            
+            </div>
+        </div>
+    </div>
+    <div class="form-actions">
+            {{ save_button() }}
+    </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .page-description {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .settings-group {
+        margin-bottom: 30px;
+        display: inline;
+    }
+
+    .settings-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 25px;
+        backdrop-filter: blur(10px);
+        
+    }
+
+    .card-title {
+        font-size: 1.4rem;
+        color: var(--text);
+        margin: 0 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+        padding-bottom: 25px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    label {
+        display: block;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text);
+        margin-bottom: 8px;
+    }
+
+    .input-description {
+        font-size: 0.9rem;
+        color: var(--text-description);
+        margin-bottom: 8px;
+    }
+
+    .input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid var(--border-color);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        font-size: 1rem;
+        font-family: 'Inter', sans-serif;
+        transition: border-color 0.3s ease;
+    }
+
+    .input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .input.select {
+        appearance: none;
+        padding-right: 35px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b4b4d1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+    }
+
+
+    .input.select option {
+        background-color: #1e1e2f; /* Match your site's dark background */
+        color: #ffffff; /* Text color */
+        border: 1px solid #444; /* Optional: to match your theme */
+    }
+
+    .form-actions {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+    }
+
+    .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .button-primary {
+        background: var(--primary);
+        color: var(--text);
+        box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+    }
+
+    .button-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const debugModeEnabled = "{{ 'true' if settings.get('debugMode', False) == 'on' else 'false' }}" === "true";
+    const JustGetRidOfTheNameEnabled = "{{ 'true' if settings.get('freewill', False) == 'on' else 'false' }}" === "true";
+
+
+    const debugModeCheckbox = document.getElementById("debugMode");
+    const JustGetRidOfTheNameCheckbox = document.getElementById("JustGetRidOfTheName");
+
+
+    if (debugModeCheckbox && debugModeEnabled) {
+        debugModeCheckbox.checked = true;
+    }
+
+    if (JustGetRidOfTheNameCheckbox && JustGetRidOfTheNameEnabled) {
+        JustGetRidOfTheNameCheckbox.checked = true;
+    }
+    
+});
+</script>
+{% endblock %}

@@ -930,13 +930,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const content = item.querySelector('.accordion-content');
         const isExpanded = item.classList.contains('expanded');
         
-        // Close all other items
-        document.querySelectorAll('.accordion-item').forEach(otherItem => {
-            if (otherItem !== item && otherItem.classList.contains('expanded')) {
-                console.log("AAAAA")
-            }
-        });
-
         // Toggle clicked item
         if (!isExpanded) {
             item.classList.add('expanded');
@@ -1011,11 +1004,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const memoryContent = document.getElementById('memoryContent').value
 
             const response = await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {method : "POST", body: JSON.stringify({guild_id: guildId, special_phrase: memoryTitle, memory: memoryContent}), headers: { 'Content-Type': 'application/json' }});
-            // await fetch(`/api/memories/${guildId}/delete`, {
-                //     method: 'DELETE',
-                //     body: JSON.stringify({ title: memoryTitle }),
-                //     headers: { 'Content-Type': 'application/json' }
-                // });
             // Create new memory with animation
             const newMemory = document.createElement('div');
             newMemory.className = 'accordion-item';
