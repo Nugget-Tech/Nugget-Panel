@@ -20,62 +20,16 @@
                     <label for="systemNote">System Instructions</label>
                     <div class="input-description">Core instructions that define how your bot should behave and respond</div>
                     <textarea class="input textarea" id="systemNote" name="systemNote" rows="6" 
-                           placeholder="Enter the system instructions for your bot..."></textarea>
+                           placeholder="Enter the system instructions for your bot...">{{ settings.get('systemNote', '') }}</textarea>
                 </div>
             </div>
 
             <div class="settings-card">
                 <h2 class="card-title">Conversation Examples</h2>
                 <p class="card-description">Add example conversations to help your bot understand the desired interaction style.</p>
-                
-                <div id="conversationExamples">
-                    <!-- Example 1 -->
-                    <div class="conversation-example">
-                        <div class="example-header">
-                            <h3>Example 1</h3>
-                            <button type="button" class="button button-icon delete-example">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>User Message</label>
-                            <textarea class="input textarea" name="examples[0].user" rows="2" 
-                                   placeholder="What the user says..."></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Bot Response</label>
-                            <textarea class="input textarea" name="examples[0].bot" rows="3"
-                                   placeholder="How your bot should respond..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Example 2 -->
-                    <div class="conversation-example">
-                        <div class="example-header">
-                            <h3>Example 2</h3>
-                            <button type="button" class="button button-icon delete-example">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>User Message</label>
-                            <textarea class="input textarea" name="examples[1].user" rows="2"
-                                   placeholder="What the user says..."></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Bot Response</label>
-                            <textarea class="input textarea" name="examples[1].bot" rows="3"
-                                   placeholder="How your bot should respond..."></textarea>
-                        </div>
-                    </div>
-                </div>
-
+                <div id="conversationExamples"></div>
                 <button type="button" class="button button-secondary" id="addExample">
-                    <span class="button-icon">➕</span>
+                    <i class="fa-solid fa-plus"></i>
                     Add Example
                 </button>
             </div>
@@ -163,6 +117,7 @@
         resize: vertical;
         font-family: 'Inter', sans-serif;
         line-height: 1.5;
+        max-width: 97%;
     }
 
     .form-group {
@@ -245,7 +200,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const examplesContainer = document.getElementById('conversationExamples');
     const addButton = document.getElementById('addExample');
-    let exampleCount = 2; // Starting with 2 examples
+    let exampleCount = 0; // Starting with 2 examples
 
     // Add new example
     addButton.addEventListener('click', function() {

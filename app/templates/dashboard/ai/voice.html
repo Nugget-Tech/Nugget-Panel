@@ -17,64 +17,90 @@
                 <h2 class="card-title">Voice Configuration</h2>
                 
                 <div class="form-group">
+
                     <label for=""></label>
                     <div class="input-description">How should your bot speak</div>
+
                     <select class="input select" id="voiceModel" name="voiceModel">
                         {% for voice_model in voice_models %}
-                            <option value="{{voice_model.model_id}}">{{voice_model.name}}</option>
+                            <option value="{{voice_model.model_id}}" {% if model == settings.get('aiModel', 'models/gemini-2.0-flash') %}selected{% endif %}>
+                                {{voice_model.name}}
+                            </option>
                         {% endfor %}
                     </select>
+
                 </div>
+
                 <div class="form-group">
+
                     <label for="voiceMessage" class="switch-label">
                         <div class="switch-label-text">Voice Mesage</div>
+                        
                         <div class="switch">
                             <input type="checkbox" id="voiceMessage" name="voiceMessage">
                             <span class="slider"></span>
                         </div>
+
                     </label>
-                    <div class="input-description">Allows nugget to send voice messages (beta)</div>
+
+                    <div class="input-description">Allows nugget to send voice messages (beta)</div>    
                 </div>
+
                 <div class="form-group">
+
                     <label for="voiceMessageConvo" class="switch-label">
                         <div class="switch-label-text">Voice message conversation</div>
+
                         <div class="switch">
                             <input type="checkbox" id="voiceMessageConvo" name="voiceMessageConvo">
                             <span class="slider"></span>
                         </div>
+
                     </label>
+
                     <div class="input-description">Allows nugget to converse with you in voice messages, ie you send a voice note, it sends one back</div>
                 </div>
+
                 <div class="form-group">
+
                     <label for="voiceId">Voice ID</label>
                     <div class="input-description">The voice used by the underlying voice model for speech synthesis</div>
                     <div class="input-with-suffix">
                         <input type="text" class="input number" id="voiceId" name="voiceId">
                     </div>
+
                 </div>
+
                 <div class="form-group">
+
                     <label for="recording-time">Recording time</label>
                     <div class="input-description">Controls the amount of time nugget records your voice in a voice call in seconds.</div>
+                    
                     <div class="input-with-suffix">
-                        <input type="number" class="input number" id="recording-time" name="recording-time" 
-                               value="10" min="0">
+                        <input type="number" class="input number" id="recording-time" name="recording-time" value="10" min="0">
                     </div>
+
                 </div>
+
                 <div class="form-group">
+
                     <label for="voiceId">Voice chance</label>
+
                     <div class="input-description">The percentage chance your nugget responds via voice message.</div>
+
                     <div class="input-with-suffix">
                         <input type="number" class="input number" id="voiceChance" name="voiceChance">
                     </div>
-                </div>
+
                 </div>
             </div>
         </div>
-        <div class="form-actions">
+    </div>
+        
+    <div class="form-actions">
             {{ save_button() }}
-        </div>
-    </form>
-</div>
+    </div>
+</form>
 {% endblock %}
 
 {% block extra_css %}
@@ -202,29 +228,43 @@
 </style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-document.getElementById('filterSettingsForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const data = {
-        filters: {
-            sexuallyExplicit: document.getElementById('filterSexuallyExplicit').value,
-            harassment: document.getElementById('filterHarassment').value,
-            dangerousContent: document.getElementById('filterDangerous').value,
-            hateSpeech: document.getElementById('filterHateSpeech').value,
-            unspecified: document.getElementById('filterUnspecified').value
-        }
-    };
+document.addEventListener('DOMContentLoaded', () => {
+    const voiceMessageCheckbox = document.getElementById("voiceMessage");
+    const voiceMessageConversationCheckbox = document.getElementById("voiceMessageConvo");
 
-    try {
-        // TODO: Add API call to save settings
-        console.log('Settings to save:', data);
-        alert('Settings saved successfully!');
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        alert('Error saving settings. Please try again.');
+    const voiceMessageEnabled = "{{ 'true' if settings.get('voiceMessage', False) == 'on' else 'false' }}" === "true";
+    const voiceMessageConversationEnabled = "{{ 'true' if settings.get('voiceMessageConvo', False) == 'on' else 'false' }}" === "true";
+
+    if (voiceMessageCheckbox && voiceMessageEnabled) {
+        voiceMessageCheckbox.checked = true;
     }
+
+    if (voiceMessageConversationCheckbox && voiceMessageConversationEnabled) {
+        voiceMessageConversationCheckbox.checked = true;
+    }
+
+    if (!voiceMessageCheckbox.checked) {
+        voiceMessageConversationCheckbox.checked = false;
+    }
+
+    // Disable voiceMessageConversation if voiceMessage is off
+    if (!voiceMessageCheckbox.checked) {
+        voiceMessageConversationCheckbox.checked = false;
+        voiceMessageConversationCheckbox.disabled = true;
+    }
+
+    // Listen for changes to voiceMessage to dynamically enable/disable
+    voiceMessageCheckbox.addEventListener("change", () => {
+        if (!voiceMessageCheckbox.checked) {
+            voiceMessageConversationCheckbox.checked = false;
+            voiceMessageConversationCheckbox.disabled = true;
+        } else {
+            voiceMessageConversationCheckbox.disabled = false;
+        }
+    });
 });
 </script>
+
 {% endblock %}

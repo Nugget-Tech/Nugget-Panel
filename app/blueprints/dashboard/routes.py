@@ -130,6 +130,7 @@ def ai_filters(nugget):
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_config(nugget),
     )
 
 
@@ -161,6 +162,7 @@ def ai_generation(nugget):
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_config(nugget),
     )
 
 
@@ -190,6 +192,7 @@ def ai_model(nugget):
             if "generateContent" in m.supported_actions
         ],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_config(nugget),
     )
 
 
@@ -233,6 +236,7 @@ def ai_messages(nugget):
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_config(nugget),
     )
 
 
@@ -252,12 +256,13 @@ def personality_traits(nugget):
         for item in request.args:
             if request.args.get(item) != "":
                 new_personality[item] = request.args.get(item)
-            Helpers.save_personality(nugget, personality=new_personality)
+        Helpers.save_personality(nugget, personality=new_personality)
     return render_template(
         "dashboard/personality/traits.html",
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_personality(nugget),
     )
 
 
@@ -275,12 +280,13 @@ def personality_prompting(nugget):
         for item in request.args:
             if request.args.get(item) != "":
                 new_personality[item] = request.args.get(item)
-            Helpers.save_personality(nugget, personality=new_personality)
+        Helpers.save_personality(nugget, personality=new_personality)
     return render_template(
         "dashboard/personality/prompting.html",
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_personality(nugget),
     )
 
 
@@ -312,6 +318,7 @@ def personality_autonomy(nugget):
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_config(nugget),
     )
 
 
@@ -322,8 +329,6 @@ def personality_autonomy(nugget):
 @Helpers.requires_auth
 def memory_config(nugget):
     user_data = Helpers.get_user_data()
-    bot_guilds = Helpers.get_guilds()
-
     return render_template(
         "dashboard/ai/memories.html",
         nugget_alias=nugget,
@@ -380,11 +385,12 @@ def features_voice(nugget):
                 new_config[item] = request.args.get(item)
         Helpers.save_config(nugget, config=new_config)
     return render_template(
-        "dashboard/features/voice.html",
+        "dashboard/ai/voice.html",
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
         voice_models=elevenlabs_client.models.get_all(),
+        settings=Helpers.get_config(nugget),
     )
 
 
@@ -410,4 +416,5 @@ def api_keys(nugget):
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
+        settings=Helpers.get_config(nugget),
     )

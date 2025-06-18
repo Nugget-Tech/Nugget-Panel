@@ -20,21 +20,24 @@
                     <label for="aiModel">AI Model</label>
                     <div class="input-description">Select which AI model to use for your bot</div>
                     <select class="input select" id="aiModel" name="aiModel">
-    {% for model in models %}
-        <option value="{{ model }}">{{ model }}</option>
-    {% endfor %}
-</select>
+                        {% for model in models %}
+                        <option value="{{ model }}" {% if model == settings.get('aiModel', 'models/gemini-2.0-flash') %}selected{% endif %}>
+                            {{ model }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="maxContext">Maximum Context Window</label>
                     <div class="input-description">Number of previous messages to keep in context</div>
                     <div class="input-with-suffix">
                         <input type="number" class="input number" id="maxContext" name="maxContext" 
-                               value="20" min="1" max="100">
+                               value="{{ settings.get('maxContext', '20') }}" min="1" max="100">
                         <span class="input-suffix">messages</span>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -166,26 +169,4 @@
         transition: all 0.3s ease;
     }
 </style>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.getElementById('modelSettingsForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const data = {
-        aiModel: document.getElementById('aiModel').value,
-        maxContextWindow: parseInt(document.getElementById('maxContext').value)
-    };
-
-    try {
-        // TODO: Add API call to save settings
-        console.log('Settings to save:', data);
-        alert('Settings saved successfully!');
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        alert('Error saving settings. Please try again.');
-    }
-});
-</script>
 {% endblock %}

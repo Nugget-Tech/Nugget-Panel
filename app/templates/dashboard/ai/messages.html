@@ -9,31 +9,31 @@
         <form class="settings-form">
             <div class="form-group">
                 <label for="wack_message">Wack Message</label>
-                <input type="text" id="wack_message" name="wack_message" class="input">
+                <input type="text" id="wack_message" name="wack_message" class="input" value="{{ settings.get('wack_message', '') }}">
                 <div class="input-description">The message the bot will say when a user reset's its context window</div>
             </div>
 
             <div class="form-group">
                 <label for="wack_error">Wack Error</label>
-                <input type="text" id="wack_error" name="wack_error" class="input">
+                <input type="text" id="wack_error" name="wack_error" class="input" value="{{ settings.get('wack_error', '') }}">
                 <div class="input-description">For when someone tries to clear the context window when it is already clear</div>
             </div>
 
             <div class="form-group">
                 <label for="error_message">Error</label>
-                <input type="text" id="error_message" name="error_message" class="input">
+                <input type="text" id="error_message" name="error_message" class="input" value="{{ settings.get('error_message', '') }}">
                 <div class="input-description">For when your bot encounters an issue weather it be downstream or in the bot itself</div>
             </div>
 
             <div class="form-group">
                 <label for="activate_message">Activate Message</label>
-                <input type="text" id="activate_message" name="activate_message" class="input">
+                <input type="text" id="activate_message" name="activate_message" class="input" value="{{ settings.get('activate_message', '') }}">
                 <div class="input-description">The message the bot says as soon as it's activated in a channel</div>
             </div>
 
             <div class="form-group">
                 <label for="deactivate_message">Deactivate Message</label>
-                <input type="text" id="deactivate_message" name="deactivate_message" class="input">
+                <input type="text" id="deactivate_message" name="deactivate_message" class="input" value="{{ settings.get('deactivate_message', '') }}">
                 <div class="input-description">The message the bot says when it's deactivated from a channel</div>
             </div>
 

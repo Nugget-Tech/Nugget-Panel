@@ -78,6 +78,19 @@ class Helpers:
 
     # https://cdn.discordapp.com/icons/<guild_id>/<guild_icon_hash>.png
 
+    def fetch_port(bot_name, host="http://localhost"):
+        bots_file_path = DATA_DIR / "bots.json"
+        with open(bots_file_path, "r") as ul_bots_file:
+            bots_file = json.load(ul_bots_file)
+            url = None
+            for bot in bots_file:
+                if bot["alias"] == bot_name:
+                    return f"{host}:{bot["port"]}"
+
+        if not url:
+            logger.error(f"Bot {bot_name} not found in bots.json")
+            raise ValueError(f"Bot {bot_name} not found")
+
     def list_nuggets():
         try:
             if not BOTS_FILE.exists():
@@ -220,21 +233,9 @@ class Helpers:
             return False
 
     def save_config(bot_name, config):
-        """Save configuration for a bot"""
+        """Save or update configuration for a bot"""
         try:
-            # Find bot in bots.json to get URL
-            bots_file_path = DATA_DIR / "bots.json"
-            with open(bots_file_path, "r") as ul_bots_file:
-                bots_file = json.load(ul_bots_file)
-                url = None
-                for bot in bots_file:
-                    if bot["alias"] == bot_name:
-                        url = f"http://localhost:{bot['port']}"
-                        break
-
-            if not url:
-                logger.error(f"Bot {bot_name} not found in bots.json")
-                raise ValueError(f"Bot {bot_name} not found")
+            url = Helpers.fetch_port(bot_name)
 
             # Ensure config is a dict
             if not isinstance(config, dict):
@@ -247,16 +248,31 @@ class Helpers:
                 except (json.JSONDecodeError, AttributeError):
                     config = {"config": config}
 
-            # Save config directly to settings/{bot_id}.json
+            # Path to config
             config_path = SETTINGS_DATA_DIR / f"{bot_name}.json"
             config_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Load existing config if it exists
+            if config_path.exists():
+                with open(config_path, "r") as existing_file:
+                    try:
+                        existing_config = json.load(existing_file)
+                    except json.JSONDecodeError:
+                        existing_config = {}
+            else:
+                existing_config = {}
+
+            # Merge configs (new keys overwrite existing ones)
+            merged_config = {**existing_config, **config}
+
+            # Save merged config
             with open(config_path, "w") as json_file:
-                json.dump(config, json_file, indent=4)
+                json.dump(merged_config, json_file, indent=4)
 
             # Notify bot of config update
             requests.post(
                 f"{url}/event",
-                json={"type": "update_config", "config": config},
+                json={"type": "update_config", "config": merged_config},
                 timeout=5,
             )
 
@@ -276,13 +292,19 @@ class Helpers:
             logger.error(f"Error getting config for {bot_name}: {e}")
             return {}
 
+    def get_personality(bot_name):
+        try:
+            with open(f"{PERSONALITY_DATA_DIR}/{bot_name}.json", "r") as json_file:
+                return json.load(json_file)
+        except FileNotFoundError:
+            return {}
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing personality for {bot_name}: {e}")
+            return {}
+
     def save_personality(bot_name, personality):
-        with open("./data/bots.json", "r") as ul_bots_file:
-            bots_file: dict = json.load(ul_bots_file)
-            for bot in bots_file:
-                if bot["alias"] == bot_name:
-                    # meaning we've found the bot
-                    url = f"http://localhost:{bot['port']}"
+        url = Helpers.fetch_port(bot_name)
+
         try:
             # Try to load existing personality
             existing_personality = {}
@@ -297,13 +319,12 @@ class Helpers:
                 partial_transformed_personality = Helpers.transform_bot_json(
                     input_json=personality, bot_name=bot_name
                 )
+                print(partial_transformed_personality)
                 requests.post(
                     f"{url}/event",
                     json={
                         "type": "update_personality",
-                        "personality": Helpers.split_personality_updates(
-                            partial_transformed_personality
-                        ),
+                        "personality": partial_transformed_personality,
                     },
                 )
             else:
@@ -318,13 +339,13 @@ class Helpers:
                     partial_transformed_personality = Helpers.transform_bot_json(
                         input_json=personality_dict, bot_name=bot_name
                     )
+                    print(partial_transformed_personality)
+
                     requests.post(
                         f"{url}/event",
                         json={
                             "type": "update_personality",
-                            "personality": Helpers.split_personality_updates(
-                                partial_transformed_personality
-                            ),
+                            "personality": partial_transformed_personality,
                         },
                     )
                 except (json.JSONDecodeError, AttributeError):
@@ -339,18 +360,9 @@ class Helpers:
             logger.error(f"Error saving personality for {bot_name}: {e}")
             raise
 
-    def get_personality(bot_name):
-        try:
-            with open(f"{PERSONALITY_DATA_DIR}/{bot_name}.json", "r") as json_file:
-                return json.load(json_file)
-        except FileNotFoundError:
-            return {}
-        except json.JSONDecodeError as e:
-            logger.error(f"Error parsing personality for {bot_name}: {e}")
-            return {}
-
-    def transform_bot_json(input_json, bot_name):
+    def _transform_bot_json(input_json, bot_name):
         """Keep as internal function"""
+        print(input_json)
         # Extract all example indices
         example_pattern = re.compile(r"examples\[(\d+)\]\.(user|bot)")
         example_indices = set()
@@ -392,24 +404,57 @@ class Helpers:
 
         return output_json
 
-    def _split_personality_updates(full_json):
-        updates = []
+    def transform_bot_json(input_json, bot_name):
+        """Keep as internal function"""
+        print(input_json)
 
-        # Personality traits
-        for key, value in full_json["personality_traits"].items():
-            updates.append({"personality_traits": {key: value}})
+        # Extract all example indices
+        example_pattern = re.compile(r"examples\[(\d+)\]\.(user|bot)")
+        example_indices = set()
 
-        # System note
-        updates.append({"system_note": full_json.get("system_note", "")})
+        for key in input_json.keys():
+            match = example_pattern.match(key)
+            if match:
+                example_indices.add(int(match.group(1)))
 
-        # Conversation examples (send separately if needed, or skip if not supported)
-        # If needed:
-        convo_eg = []
-        for i, example in enumerate(full_json.get("conversation_examples", [])):
-            convo_eg.append({"user": example["user"], "bot": example["bot"]})
-            updates.append({"conversation_examples": convo_eg})
+        # Build conversation examples if they exist
+        conversation_examples = []
+        if example_indices:
+            for i in sorted(example_indices):
+                user_key = f"examples[{i}].user"
+                bot_key = f"examples[{i}].bot"
+                conversation_examples.append(
+                    {
+                        "user": input_json.get(user_key, ""),
+                        "bot": input_json.get(bot_key, ""),
+                    }
+                )
 
-        return updates
+        # Compose output JSON
+        output_json = {
+            "personality_traits": {
+                "name": input_json.get("name"),
+                "age": int(input_json["age"]) if "age" in input_json else None,
+                "role": input_json.get("role"),
+                "description": input_json.get("description"),
+                "likes": input_json.get("likes"),
+                "dislikes": input_json.get("dislikes"),
+            }
+        }
+
+        # Optionally add system_note if present
+        if "systemNote" in input_json:
+            output_json["system_note"] = input_json["systemNote"]
+
+        # Only add conversation_examples if they exist
+        if conversation_examples:
+            output_json["conversation_examples"] = conversation_examples
+
+        personality_file = PERSONALITY_DATA_DIR / f"{bot_name}.json"
+        with open(personality_file, "w") as f:
+            json.dump(output_json, f, indent=4)
+
+        return output_json
 
     def split_personality_updates(full_json):
         updates = {}
@@ -475,35 +520,12 @@ class Helpers:
         return json.loads(requests.get(f"{url}/memories").text)
 
     def get_bot_guilds(bot_name):
-        bots_file_path = DATA_DIR / "bots.json"
-        with open(bots_file_path, "r") as ul_bots_file:
-            bots_file = json.load(ul_bots_file)
-            url = None
-            for bot in bots_file:
-                if bot["alias"] == bot_name:
-                    url = f"http://localhost:{bot['port']}"
-                    break
-
-        if not url:
-            logger.error(f"Bot {bot_name} not found in bots.json")
-            raise ValueError(f"Bot {bot_name} not found")
-
+        url = Helpers.fetch_port(bot_name)
         return json.loads(requests.get(f"{url}/guilds").text)
 
     def save_memory(bot_name, guild_id, special_phrase, memory_content, memory_id):
         # Find bot in bots.json to get URL
-        bots_file_path = DATA_DIR / "bots.json"
-        with open(bots_file_path, "r") as ul_bots_file:
-            bots_file = json.load(ul_bots_file)
-            url = None
-            for bot in bots_file:
-                if bot["alias"] == bot_name:
-                    url = f"http://localhost:{bot['port']}"
-                    break
-
-        if not url:
-            logger.error(f"Bot {bot_name} not found in bots.json")
-            raise ValueError(f"Bot {bot_name} not found")
+        url = Helpers.fetch_port(bot_name)
 
         # Send POST request to /event endpoint with update_memory event
         if memory_id == None or memory_id == "":
@@ -530,19 +552,7 @@ class Helpers:
         return json.loads(response.text), memory_id
 
     def delete_memory(bot_name, guild_id, memory_id):
-        # Find bot in bots.json to get URL
-        bots_file_path = DATA_DIR / "bots.json"
-        with open(bots_file_path, "r") as ul_bots_file:
-            bots_file = json.load(ul_bots_file)
-            url = None
-            for bot in bots_file:
-                if bot["alias"] == bot_name:
-                    url = f"http://localhost:{bot['port']}"
-                    break
-
-        if not url:
-            logger.error(f"Bot {bot_name} not found in bots.json")
-            raise ValueError(f"Bot {bot_name} not found")
+        url = Helpers.fetch_port(bot_name)
 
         # Send POST request to /event endpoint with update_memory event
 
@@ -563,19 +573,7 @@ class Helpers:
         return jsonify({"memory_id": memory_id, "response": str(response.json)})
 
     def fetch_invite(bot_name):
-        bots_file_path = DATA_DIR / "bots.json"
-        with open(bots_file_path, "r") as ul_bots_file:
-            bots_file = json.load(ul_bots_file)
-            url = None
-            for bot in bots_file:
-                if bot["alias"] == bot_name:
-                    url = f"http://localhost:{bot['port']}"
-                    break
-
-        if not url:
-            logger.error(f"Bot {bot_name} not found in bots.json")
-            raise ValueError(f"Bot {bot_name} not found")
-
+        url = Helpers.fetch_port(bot_name)
         response = requests.get(f"{url}/bot-details")
         print(response)
         return f"""https://discord.com/oauth2/authorize?client_id={response.json().get("bot_id")}&permissions=309240907840&integration_type=0&scope=bot"""

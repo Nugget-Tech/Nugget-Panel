@@ -18,7 +18,7 @@
                 <div class="form-group">
                     <label for="gemini_api_key">Google Gemini API Key</label>
                     <div class="input-with-button">
-                        <input type="password" id="gemini_api_key" name="gemini_api_key" class="input" value="{{ request.args.get('gemini_api_key', '') }}">
+                        <input type="password" id="gemini_api_key" name="gemini_api_key" class="input" value="{{ settings.get('gemini_api_key', '') }}">
                         <button type="button" class="button button-icon toggle-visibility" aria-label="Toggle visibility">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -29,7 +29,7 @@
                 <div class="form-group">
                     <label for="elevenlabs_api_key">ElevenLabs API Key</label>
                     <div class="input-with-button">
-                        <input type="password" id="elevenlabs_api_key" name="elevenlabs_api_key" class="input" value="{{ request.args.get('elevenlabs_api_key', '') }}">
+                        <input type="password" id="elevenlabs_api_key" name="elevenlabs_api_key" class="input" value="{{ settings.get('gemini_api_key', '') }}">
                         <button type="button" class="button button-icon toggle-visibility" aria-label="Toggle visibility">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -40,7 +40,7 @@
                 <div class="form-group">
                     <label for="discord_token">Discord Bot Token</label>
                     <div class="input-with-button">
-                        <input type="password" id="discord_token" name="discord_token" class="input" value="{{ request.args.get('discord_token', '') }}">
+                        <input type="password" id="discord_token" name="discord_token" class="input" value="{{ settings.get('gemini_api_key', '') }}">
                         <button type="button" class="button button-icon toggle-visibility" aria-label="Toggle visibility">
                             <i class="fas fa-eye"></i>
                         </button>

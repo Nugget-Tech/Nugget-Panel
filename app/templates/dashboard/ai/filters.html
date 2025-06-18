@@ -20,9 +20,12 @@
                     <label for="filterSexuallyExplicit">Sexually Explicit Content</label>
                     <div class="input-description">How to handle sexually explicit content in responses</div>
                     <select class="input select" id="filterSexuallyExplicit" name="filterSexuallyExplicit">
-                        <option value="BLOCK_NONE">Block None</option>
-                        <option value="BLOCK_SOME">Block Some</option>
-                        <option value="BLOCK_ALL">Block All</option>
+                        
+                        <option value="BLOCK_NONE" {% if settings.get("filterSexuallyExplicit") == "BLOCK_NONE" %}selected{% endif %}>Block None</option>
+                        <option value="BLOCK_ONLY_HIGH" {% if settings.get("filterSexuallyExplicit") == "BLOCK_ONLY_HIGH" %}selected{% endif %}>Block Few (Only high)</option>
+                        <option value="BLOCK_MEDIUM_AND_ABOVE" {% if settings.get("filterSexuallyExplicit") == "BLOCK_MEDIUM_AND_ABOVE" %}selected{% endif %}>Block Some (Medium and above)</option>
+                        <option value="BLOCK_LOW_AND_ABOVE" {% if settings.get("filterSexuallyExplicit") == "BLOCK_LOW_AND_ABOVE" %}selected{% endif %}>Block Most (Low and above)</option>
+
                     </select>
                 </div>
 
@@ -30,9 +33,12 @@
                     <label for="filterHarassment">Harassment</label>
                     <div class="input-description">How to handle harassing content in responses</div>
                     <select class="input select" id="filterHarassment" name="filterHarassment">
-                        <option value="BLOCK_NONE">Block None</option>
-                        <option value="BLOCK_SOME">Block Some</option>
-                        <option value="BLOCK_ALL">Block All</option>
+
+                        <option value="BLOCK_NONE" {% if settings.get("filterHarassment") == "BLOCK_NONE" %}selected{% endif %}>Block None</option>
+                        <option value="BLOCK_ONLY_HIGH" {% if settings.get("filterHarassment") == "BLOCK_ONLY_HIGH" %}selected{% endif %}>Block Few (Only high)</option>
+                        <option value="BLOCK_MEDIUM_AND_ABOVE" {% if settings.get("filterHarassment") == "BLOCK_MEDIUM_AND_ABOVE" %}selected{% endif %}>Block Some (Medium and above)</option>
+                        <option value="BLOCK_LOW_AND_ABOVE" {% if settings.get("filterHarassment") == "BLOCK_LOW_AND_ABOVE" %}selected{% endif %}>Block Most (Low and above)</option>
+
                     </select>
                 </div>
 
@@ -40,9 +46,12 @@
                     <label for="filterDangerous">Dangerous Content</label>
                     <div class="input-description">How to handle potentially dangerous content</div>
                     <select class="input select" id="filterDangerous" name="filterDangerous">
-                        <option value="BLOCK_NONE">Block None</option>
-                        <option value="BLOCK_SOME">Block Some</option>
-                        <option value="BLOCK_ALL">Block All</option>
+
+                        <option value="BLOCK_NONE" {% if settings.get("filterDangerous") == "BLOCK_NONE" %}selected{% endif %}>Block None</option>
+                        <option value="BLOCK_ONLY_HIGH" {% if settings.get("filterDangerous") == "BLOCK_ONLY_HIGH" %}selected{% endif %}>Block Few (Only high)</option>
+                        <option value="BLOCK_MEDIUM_AND_ABOVE" {% if settings.get("filterDangerous") == "BLOCK_MEDIUM_AND_ABOVE" %}selected{% endif %}>Block Some (Medium and above)</option>
+                        <option value="BLOCK_LOW_AND_ABOVE" {% if settings.get("filterDangerous") == "BLOCK_LOW_AND_ABOVE" %}selected{% endif %}>Block Most (Low and above)</option>
+
                     </select>
                 </div>
 
@@ -50,9 +59,12 @@
                     <label for="filterHateSpeech">Hate Speech</label>
                     <div class="input-description">How to handle hate speech in responses</div>
                     <select class="input select" id="filterHateSpeech" name="filterHateSpeech">
-                        <option value="BLOCK_NONE">Block None</option>
-                        <option value="BLOCK_SOME">Block Some</option>
-                        <option value="BLOCK_ALL">Block All</option>
+
+                        <option value="BLOCK_NONE" {% if settings.get("filterHateSpeech") == "BLOCK_NONE" %}selected{% endif %}>Block None</option>
+                        <option value="BLOCK_ONLY_HIGH" {% if settings.get("filterHateSpeech") == "BLOCK_ONLY_HIGH" %}selected{% endif %}>Block Few (Only high)</option>
+                        <option value="BLOCK_MEDIUM_AND_ABOVE" {% if settings.get("filterHateSpeech") == "BLOCK_MEDIUM_AND_ABOVE" %}selected{% endif %}>Block Some (Medium and above)</option>
+                        <option value="BLOCK_LOW_AND_ABOVE" {% if settings.get("filterHateSpeech") == "BLOCK_LOW_AND_ABOVE" %}selected{% endif %}>Block Most (Low and above)</option>
+
                     </select>
                 </div>
 
@@ -60,9 +72,12 @@
                     <label for="filterUnspecified">Unspecified Content</label>
                     <div class="input-description">How to handle other potentially inappropriate content</div>
                     <select class="input select" id="filterUnspecified" name="filterUnspecified">
-                        <option value="BLOCK_NONE">Block None</option>
-                        <option value="BLOCK_MEDIUM_AND_ABOVE" selected>Block Medium & Above</option>
-                        <option value="BLOCK_ALL">Block All</option>
+                        
+                        <option value="BLOCK_NONE" {% if settings.get("filterUnspecified") == "BLOCK_NONE" %}selected{% endif %}>Block None</option>
+                        <option value="BLOCK_ONLY_HIGH" {% if settings.get("filterUnspecified") == "BLOCK_ONLY_HIGH" %}selected{% endif %}>Block Few (Only high)</option>
+                        <option value="BLOCK_MEDIUM_AND_ABOVE" {% if settings.get("filterUnspecified") == "BLOCK_MEDIUM_AND_ABOVE" %}selected{% endif %}>Block Some (Medium and above)</option>
+                        <option value="BLOCK_LOW_AND_ABOVE" {% if settings.get("filterUnspecified") == "BLOCK_LOW_AND_ABOVE" %}selected{% endif %}>Block Most (Low and above)</option>
+
                     </select>
                 </div>
             </div>
@@ -205,31 +220,4 @@
         box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
     }
 </style>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.getElementById('filterSettingsForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const data = {
-        filters: {
-            sexuallyExplicit: document.getElementById('filterSexuallyExplicit').value,
-            harassment: document.getElementById('filterHarassment').value,
-            dangerousContent: document.getElementById('filterDangerous').value,
-            hateSpeech: document.getElementById('filterHateSpeech').value,
-            unspecified: document.getElementById('filterUnspecified').value
-        }
-    };
-
-    try {
-        // TODO: Add API call to save settings
-        console.log('Settings to save:', data);
-        alert('Settings saved successfully!');
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        alert('Error saving settings. Please try again.');
-    }
-});
-</script>
 {% endblock %}

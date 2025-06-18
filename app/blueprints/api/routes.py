@@ -47,11 +47,12 @@ def save_personality(nugget):
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route("/<nugget>/config", methods=["GET"])
+@api_bp.route("/<nugget>/config", methods=["GET", "POST"])
 @Helpers.requires_auth
 def configure_bot(nugget):
     # This function is only meant to pull config data for this bot
-    return Helpers.get_config(nugget)
+    print(request.get_data())
+    return  # TODO, USE Helpers.save_config(bot_name=nugget, config=)
 
 
 @api_bp.route("/bots", methods=["POST"])

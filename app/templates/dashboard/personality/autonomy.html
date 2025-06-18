@@ -15,8 +15,8 @@
     <form class="settings-form" id="autonomySettingsForm">
         <div class="settings-group">
             <div class="settings-card">
+
                 <h2 class="card-title">Agentic Features</h2>
-                
                 <div class="form-group">
                     <label for="deepContext" class="switch-label">
                         <div class="switch-label-text">Deep Context</div>
@@ -27,6 +27,7 @@
                     </label>
                     <div class="input-description">Allows nuggets to gather a deeper understanding of conversations</div>
                 </div>
+
             </div>
 
             <div class="settings-card">
@@ -44,7 +45,7 @@
                     <label for="textFrequency">Text Frequency</label>
                     <div class="input-with-suffix">
                         <input type="number" class="input number" id="textFrequency" name="textFrequency" 
-                               value="5" min="0" max="100" step="1">
+                               value="{{ settings.get('textFrequency', '5') }}" min="0" max="100" step="1">
                         <span class="input-suffix">%</span>
                     </div>
                     <div class="input-description">This determines the random rate at which nugget will pop into chats</div>
@@ -54,7 +55,7 @@
                     <label for="keywordChance">Keyword Added Chance</label>
                     <div class="input-with-suffix">
                         <input type="number" class="input number" id="keywordChance" name="keywordChance" 
-                               value="10" min="0" max="100" step="1">
+                               value="{{ settings.get('keywordChance', '10') }}" min="0" max="100" step="1">
                         <span class="input-suffix">%</span>
                     </div>
                     <div class="input-description">The chance increase modifier for when a keyword is detected in a message</div>
@@ -63,7 +64,7 @@
                 <div class="form-group">
                     <label for="keywords">Keywords</label>
                     <textarea class="input textarea" id="keywords" name="keywords" rows="4"
-                              placeholder="Enter keywords separated by commas..."></textarea>
+                              placeholder="Enter keywords separated by commas...">{{ settings.get('keywords', '10') }}</textarea>
                     <div class="input-description">Keywords that trigger increased interaction chance</div>
                 </div>
             </div>
@@ -135,7 +136,7 @@
     }
 
     .input {
-        width: 100%;
+        width: 97.5%;
         padding: 10px;
         border-radius: 8px;
         background: rgba(255, 255, 255, 0.05);
@@ -162,64 +163,7 @@
         font-size: 0.85rem;
     }
 
-    /* Switch styling */
-    .switch-label {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-    }
-
-    .switch-label-text {
-        font-weight: 500;
-        color: #FFFFFF;
-    }
-
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 48px;
-        height: 24px;
-    }
-
-    .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(255, 255, 255, 0.1);
-        transition: 0.4s;
-        border-radius: 24px;
-    }
-
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background-color: #fff;
-        transition: 0.4s;
-        border-radius: 50%;
-    }
-
-    input:checked + .slider {
-        background-color: #5865F2;
-    }
-
-    input:checked + .slider:before {
-        transform: translateX(24px);
-    }
-
+    
     .button {
         padding: 10px 20px;
         border-radius: 8px;
@@ -256,4 +200,28 @@
         margin-left: 15px;
     }
 </style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const deepContextEnabled = "{{ 'true' if settings.get('deepContext', False) == 'on' else 'false' }}" === "true";
+    const freewillEnabled = "{{ 'true' if settings.get('freewill', False) == 'on' else 'false' }}" === "true";
+
+
+    const deepContextCheckbox = document.getElementById("deepContext");
+    const freewillCheckbox = document.getElementById("freewill");
+
+
+    if (deepContextCheckbox && deepContextEnabled) {
+        deepContextCheckbox.checked = true;
+    }
+
+    if (freewillCheckbox && freewillEnabled) {
+        freewillCheckbox.checked = true;
+    }
+    
+});
+</script>
 {% endblock %}

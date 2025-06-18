@@ -97,7 +97,7 @@
 
                 <div class="form-actions modal-actions">
                     <button type="button" class="button button-secondary cancel-button">Cancel</button>
-                    <button type="submit" id="add_new" class="button button-primary">
+                    <button type="submit" class="button button-primary">
                         <i class="fas fa-save"></i>
                         Save Memory
                     </button>
@@ -659,7 +659,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeButton = modal.querySelector('.modal-close');
     const cancelButton = modal.querySelector('.cancel-button');
     const memoryForm = document.getElementById('addMemoryForm');
-    const add_new = document.getElementById("add_new");
     const accordion = document.querySelector('.accordion');
     
     // Guild selector elements
@@ -715,9 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!selectedGuildValue) return;
 
         try {
-            // TODO: Add API call to fetch memories for selected guild
             const response = await fetch(`/api/{{nugget_alias}}/memories/${selectedGuildValue}`);
-            // const response = await fetch(`/api/{{nugget_alias}}/memories/1236174987325472768`);
             const memories = await response.json();
             updateMemoriesList(memories);
         } catch (error) {
@@ -776,17 +773,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
 
-                accordion.appendChild(newMemory);                // Stagger the animation of each item
+                accordion.appendChild(newMemory);
+
+                // Stagger the animation of each item
                 setTimeout(() => {
                     newMemory.style.opacity = '1';
                     newMemory.style.transform = 'translateY(0)';
-                }, index * 100);
+                }, index * 100);                // Add edit functionality to new memory
+                setupEditFunctionality(newMemory);
                 
                 // Add delete functionality to new memory
                 const deleteBtn = newMemory.querySelector('.button-danger');
                 deleteBtn.addEventListener('click', handleMemoryDeletion);
 
-                // Setup edit functionality once
+                // Setup edit functionality
                 setupEditFunctionality(newMemory);
             });
         });
@@ -796,15 +796,17 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleMemoryDeletion(e) {
         e.stopPropagation();
         const item = e.target.closest('.accordion-item');
-        const guildId = guildSelect.value;
-        const memoryElement = item.querySelector('.memory-title');
-        const memoryId = memoryElement.getAttribute('memory_id');
         
         if (confirm('Are you sure you want to delete this memory? This action cannot be undone.')) {
             item.style.transform = 'translateX(100%)';
             item.style.opacity = '0';
             
             try {
+                const guildId = guildSelect.value;
+                const memoryElement = document.querySelector('.memory-title');
+                const memoryTitle = memoryElement.textContent;
+                const memoryId = memoryElement.getAttribute('memory_id');
+                
                 await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {
                     method: 'DELETE',
                     body: JSON.stringify({ guild_id: guildId, memory_id: memoryId }),
@@ -828,47 +830,43 @@ document.addEventListener('DOMContentLoaded', function() {
         const editForm = memoryItem.querySelector('.memory-edit-form');
         const cancelBtn = memoryItem.querySelector('.cancel-edit');
         const saveBtn = memoryItem.querySelector('.save-edit');
-        const content = memoryItem.querySelector('.accordion-content');
-
-        // Remove existing listeners by cloning nodes
-        const newEditBtn = editBtn.cloneNode(true);
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        const newSaveBtn = saveBtn.cloneNode(true);
-        
-        editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-
-        // Edit button click handler
-        newEditBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+          editBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent accordion toggle
+            const content = memoryItem.querySelector('.accordion-content');
+            
+            // First hide view with fade
             viewDiv.style.opacity = '0';
             setTimeout(() => {
                 viewDiv.style.display = 'none';
                 editForm.style.display = 'block';
+                // Trigger reflow
                 content.style.maxHeight = content.scrollHeight + 'px';
+                // Show edit form with fade
                 requestAnimationFrame(() => {
                     editForm.style.opacity = '1';
                 });
             }, 150);
         });
 
-        // Cancel button click handler
-        newCancelBtn.addEventListener('click', (e) => {
+        cancelBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            const content = memoryItem.querySelector('.accordion-content');
+            
+            // First hide edit form with fade
             editForm.style.opacity = '0';
             setTimeout(() => {
                 editForm.style.display = 'none';
                 viewDiv.style.display = 'block';
+                // Trigger reflow
                 content.style.maxHeight = content.scrollHeight + 'px';
+                // Show view with fade
                 requestAnimationFrame(() => {
                     viewDiv.style.opacity = '1';
                 });
             }, 150);
         });
 
-        // Save button click handler
-        newSaveBtn.addEventListener('click', async (e) => {
+        saveBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const guildId = guildSelect.value;
             const memoryId = memoryItem.querySelector('.memory-title').getAttribute('memory_id');
@@ -876,6 +874,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newContent = memoryItem.querySelector('.memory-content-edit').value;
 
             try {
+                // Make API call to update memory
                 const response = await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {
                     method: 'PUT',
                     body: JSON.stringify({
@@ -887,17 +886,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (response.ok) {
+                    // Update the view
                     memoryItem.querySelector('.memory-title').textContent = newTitle;
                     memoryItem.querySelector('.memory-view p').textContent = newContent;
-                    
-                    editForm.style.opacity = '0';
-                    setTimeout(() => {
-                        editForm.style.display = 'none';
-                        viewDiv.style.display = 'block';
-                        requestAnimationFrame(() => {
-                            viewDiv.style.opacity = '1';
-                        });
-                    }, 150);
+                    viewDiv.style.display = 'block';
+                    editForm.style.display = 'none';
                 } else {
                     throw new Error('Failed to update memory');
                 }
@@ -969,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle accordion clicks
     accordion.addEventListener('click', (e) => {
         const header = e.target.closest('.accordion-header');
-        if (!header || e.target.closest('.button-danger') || e.target.closest('.button-edit')) return;
+        if (!header || e.target.closest('.button-danger')) return;
         
         const item = header.parentElement;
         toggleAccordion(item);
@@ -986,7 +979,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.style.transform = 'translateX(100%)';
                 item.style.opacity = '0';
                 try {
-                    // TODO: Add API call to delete memory
                     await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {method : 'delete'});
                     
                     // Remove after animation
@@ -1005,57 +997,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission with new memory animation
     memoryForm.addEventListener('submit', async (e) => {
-        console.log("Submitted")
         e.preventDefault();
         
-        const guildId = guildSelect.value;
-        const memoryTitle = document.getElementById('memoryTitle').value;
-        const memoryContent = document.getElementById('memoryContent').value;
+        const formData = {
+            title: document.getElementById('memoryTitle').value,
+            content: document.getElementById('memoryContent').value,
+        };
 
         try {
-            const response = await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    guild_id: guildId,
-                    special_phrase: memoryTitle,
-                    memory: memoryContent
-                }),
-                headers: { 'Content-Type': 'application/json' }
-            });
+            const guildId = guildSelect.value;
 
-            if (!response.ok) {
-                throw new Error('Failed to save memory');
-            }
+            const memoryTitle = document.getElementById('memoryTitle').value
+            const memoryContent = document.getElementById('memoryContent').value
 
-            const responseData = await response.json();
+            const response = await fetch(`/api/{{nugget_alias}}/memories/${guildId}`, {method : "POST", body: JSON.stringify({guild_id: guildId, special_phrase: memoryTitle, memory: memoryContent}), headers: { 'Content-Type': 'application/json' }});
+            // await fetch(`/api/memories/${guildId}/delete`, {
+                //     method: 'DELETE',
+                //     body: JSON.stringify({ title: memoryTitle }),
+                //     headers: { 'Content-Type': 'application/json' }
+                // });
+            // Create new memory with animation
             const newMemory = document.createElement('div');
             newMemory.className = 'accordion-item';
             newMemory.style.opacity = '0';
             newMemory.style.transform = 'translateY(20px)';
             newMemory.innerHTML = `
                 <div class="accordion-header">
-                    <span class="memory-title" memory_id="${responseData.memory_id}">${memoryTitle}</span>
-                    <div class="actions">
-                        <button class="button-edit" aria-label="Edit memory">
-                            <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        <button class="button-danger" aria-label="Delete memory">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                    <span class="memory-title">${formData.title}</span>
+                    <button class="button-danger" aria-label="Delete memory">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
                 <div class="accordion-content">
-                    <div class="memory-view">
-                        <p>${memoryContent}</p>
-                    </div>
-                    <div class="memory-edit-form" style="display: none;">
-                        <input type="text" class="input memory-title-edit" value="${memoryTitle}">
-                        <textarea class="input memory-content-edit" rows="6">${memoryContent}</textarea>
-                        <div class="memory-edit-actions">
-                            <button class="button button-secondary cancel-edit">Cancel</button>
-                            <button class="button button-primary save-edit">Save Memory</button>
-                        </div>
-                    </div>
+                    <p>${formData.content}</p>
                 </div>
             `;
             
@@ -1066,15 +1040,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 newMemory.style.transform = 'translateY(0)';
             });
 
-            // Setup edit and delete functionality
-            setupEditFunctionality(newMemory);
+            // Add delete functionality to new memory
             const deleteBtn = newMemory.querySelector('.button-danger');
-            const newDeleteBtn = deleteBtn.cloneNode(true);
-            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-            newDeleteBtn.addEventListener('click', handleMemoryDeletion);
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Are you sure you want to delete this memory?')) {
+                    newMemory.style.transform = 'translateX(100%)';
+                    newMemory.style.opacity = '0';
+                    setTimeout(() => newMemory.remove(), 300);
+                }
+            });
 
             closeModal();
-            memoryForm.reset();
         } catch (error) {
             console.error('Error saving memory:', error);
             alert('Failed to save memory. Please try again.');
