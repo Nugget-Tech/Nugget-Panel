@@ -182,18 +182,18 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const debugModeEnabled = "{{ 'true' if settings.get('debugMode', False) == 'on' else 'false' }}" === "true";
-    const JustGetRidOfTheNameEnabled = "{{ 'true' if settings.get('freewill', False) == 'on' else 'false' }}" === "true";
+    const JustGetRidOfTheNameEnabled = "{{ 'true' if settings.get('JustGetRidOfTheName', False) == 'on' else 'false' }}" === "true";
 
 
     const debugModeCheckbox = document.getElementById("debugMode");
     const JustGetRidOfTheNameCheckbox = document.getElementById("JustGetRidOfTheName");
 
 
-    if (debugModeCheckbox && debugModeEnabled) {
+    if (debugModeEnabled) {
         debugModeCheckbox.checked = true;
     }
 
-    if (JustGetRidOfTheNameCheckbox && JustGetRidOfTheNameEnabled) {
+    if (JustGetRidOfTheNameEnabled) {
         JustGetRidOfTheNameCheckbox.checked = true;
     }
     

@@ -45,6 +45,21 @@ def home():
 @Helpers.requires_auth
 def dashboard(nugget):
     user_data = Helpers.get_user_data()
+    if any(
+        item in request.args
+        for item in [
+            "debugMode",
+            "JustGetRidOfTheName",
+        ]
+    ):  # this checks to see if any of the items that can change have changed, if so we need to check to see which one of these is none
+        # then we need to check to see if any of these items have a corresponding value in a databank, if they do and the request argument is none
+        # then we can safely ignore it and retain the original item
+        print("Checking to see which item is not none")
+        new_config = {}
+        for item in request.args:
+            if request.args.get(item) != "":
+                new_config[item] = request.args.get(item)
+        Helpers.save_config(nugget, config=new_config)
     return render_template(
         "dashboard/dashboard.html",
         nugget_alias=nugget,
@@ -73,18 +88,6 @@ def memories(nugget):
     user_data = Helpers.get_user_data()
     return render_template(
         "dashboard/memories.html",
-        nugget_alias=nugget,
-        username=user_data["username"],
-        avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
-    )
-
-
-@dashboard_bp.route("/<nugget>/model-configuration")
-@Helpers.requires_auth
-def model_config(nugget):
-    user_data = Helpers.get_user_data()
-    return render_template(
-        "dashboard/model-config.html",
         nugget_alias=nugget,
         username=user_data["username"],
         avatar_url=f"https://cdn.discordapp.com/avatars/{user_data['id']}/{user_data['avatar']}.png",
