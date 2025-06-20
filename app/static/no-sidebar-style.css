@@ -97,8 +97,6 @@ body {
 
 /* Page Content */
 .page-content {
-    padding: 2rem;
-    margin-left: var(--sidebar-width);
     margin-top: var(--header-height);
     background: var(--bg-main);
     min-height: calc(100vh - var(--header-height));
@@ -106,8 +104,6 @@ body {
 
 /* Page Content */
 .page-content {
-    padding: 2rem;
-    margin-left: var(--sidebar-width);
     margin-top: var(--header-height);
     background: var(--bg-main);
     min-height: calc(100vh - var(--header-height));

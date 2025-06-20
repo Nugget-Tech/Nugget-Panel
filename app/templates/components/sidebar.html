@@ -1,6 +1,10 @@
 {% macro sidebar(nugget_alias) %}
-<div class="sidebar">    <div class="sidebar-header">
-        <a href="/dashboard/home" class="sidebar-logo">
+<div class="sidebar">    
+    <div class="sidebar-header">
+        <button id="sidebar-toggle" class="sidebar-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="/dashboard/home" class="sidebar-logo" id="sidebar-icon">
             <i class="fas fa-robot"></i>
             <span class="logo-text">Nugget Tech</span>
         </a>
@@ -10,7 +14,7 @@
         <div class="nav-section-title">Main</div>
         <ul class="nav-items">
             <li class="nav-item">
-                <a href="/{{nugget_alias}}/dashboard" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                <a href="/dashboard/{{nugget_alias}}/dashboard" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
                     <i class="fas fa-home nav-link-icon"></i>
                     <span class="nav-link-text">Dashboard</span>
                 </a>
@@ -28,7 +32,8 @@
     <nav class="nav-section">
         <div class="nav-section-title">Authentication</div>
         <ul class="nav-items">
-            <li class="nav-item">                <a href="/dashboard/{{ nugget_alias }}/api-keys" class="nav-link {% if active_page == 'api-keys' %}active{% endif %}">
+            <li class="nav-item">                
+                <a href="/dashboard/{{ nugget_alias }}/api-keys" class="nav-link {% if active_page == 'api-keys' %}active{% endif %}">
                     <i class="fas fa-key nav-link-icon"></i>
                     <span class="nav-link-text">API Keys</span>
                 </a>
@@ -143,4 +148,95 @@
         </ul>
     </nav>
 </div>
+
+
+<style>
+.sidebar {
+    transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar.collapsed .nav-section-title,
+.sidebar.collapsed .nav-link-text,
+.sidebar.collapsed .logo-text {
+    display: none;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    cursor: pointer;
+    padding: 15px;
+    margin-right: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header {
+    padding: 15px !important; 
+    border-bottom: 1px solid var(--border-color);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sidebar = document.querySelector('.sidebar');
+    const icon = document.getElementsByClassName("fas fa-robot");
+    const navbarLength = document.getElementsByClassName("top-nav");
+    const username = document.getElementsByClassName("username");
+    const mainContent = document.querySelector('.main-content');
+
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+
+
+    // Check if there's a saved state
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isSidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        if (icon.length > 0) {
+            icon[0].style.display = "none";
+        }
+    
+    }
+
+    if (isSidebarCollapsed) {
+        mainContent.style.marginLeft = '0px';
+        navbarLength[0].style.position = 'static';
+        username[0].style.display = 'none';
+    }
+
+
+    sidebarToggle.addEventListener('click', function () {
+        sidebar.classList.toggle('collapsed');
+        const isCollapsed = sidebar.classList.contains('collapsed');
+
+        // Save the state
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+
+        if (icon.length > 0) {
+            icon[0].style.display = isCollapsed ? "none" : "inline-block"; // or "block"
+        }
+
+        if (isCollapsed) {
+            mainContent.style.marginLeft = '0px';
+            navbarLength[0].style.position = 'static';
+            username[0].style.display = 'none';
+        }
+        else {
+            mainContent.style.marginLeft = '250px';
+            navbarLength[0].style.position = 'fixed';
+            username[0].style.display = '';
+        }
+
+    });
+});
+</script>
 {% endmacro %}

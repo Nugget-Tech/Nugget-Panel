@@ -82,7 +82,7 @@ class Helpers:
             url = None
             for bot in bots_file:
                 if bot["alias"] == bot_name:
-                    return f"{host}:{bot["port"]}"
+                    return f"{host}:{bot['port']}"
 
         if not url:
             logger.error(f"Bot {bot_name} not found in bots.json")

@@ -35,10 +35,9 @@
         {{ sidebar(nugget_alias) }}
     {% endblock %}
 
-    <div class="top-nav">
+    <div class="top-nav" id="navbar">
         <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
         <div class="user-menu">
-            <span class="username">{{ username }}</span>
             <img src="{{ avatar_url }}" alt="Profile Picture" class="user-avatar">
         </div>
     </div>
