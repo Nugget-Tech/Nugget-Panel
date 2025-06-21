@@ -186,57 +186,62 @@
 }
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+<script>document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.querySelector('.sidebar');
     const icon = document.getElementsByClassName("fas fa-robot");
     const navbarLength = document.getElementsByClassName("top-nav");
     const username = document.getElementsByClassName("username");
     const mainContent = document.querySelector('.main-content');
-
     const sidebarToggle = document.getElementById('sidebar-toggle');
 
+    function isMobileView() {
+        return window.innerWidth <= 768;
+    }
 
-    // Check if there's a saved state
     const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+    // Apply collapsed layout
     if (isSidebarCollapsed) {
         sidebar.classList.add('collapsed');
-        if (icon.length > 0) {
-            icon[0].style.display = "none";
-        }
-    
-    }
 
-    if (isSidebarCollapsed) {
+        if (icon.length > 0) icon[0].style.display = "none";
+
         mainContent.style.marginLeft = '0px';
-        navbarLength[0].style.position = 'static';
-        username[0].style.display = 'none';
+        if (navbarLength.length > 0) navbarLength[0].style.position = 'static';
+        if (username.length > 0) username[0].style.display = 'none';
+
+        // 👇 Fix: Ensure sidebar toggle is always visible
+        if (sidebarToggle) sidebarToggle.style.display = 'block';
     }
 
+    // Sidebar toggle click handler
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('collapsed');
+            const isCollapsed = sidebar.classList.contains('collapsed');
 
-    sidebarToggle.addEventListener('click', function () {
-        sidebar.classList.toggle('collapsed');
-        const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
 
-        // Save the state
-        localStorage.setItem('sidebarCollapsed', isCollapsed);
+            if (icon.length > 0) icon[0].style.display = isCollapsed ? "none" : "inline-block";
 
-        if (icon.length > 0) {
-            icon[0].style.display = isCollapsed ? "none" : "inline-block"; // or "block"
-        }
+            if (isCollapsed) {
+                mainContent.style.marginLeft = '50px';
+                if (navbarLength.length > 0) navbarLength[0].style.position = 'static';
+                if (username.length > 0) username[0].style.display = 'none';
+            } else {
+                mainContent.style.marginLeft = isMobileView() ? '0px' : '250px';
+                if (navbarLength.length > 0) navbarLength[0].style.position = 'fixed';
+                if (username.length > 0) username[0].style.display = '';
+            }
+        });
+    }
 
-        if (isCollapsed) {
-            mainContent.style.marginLeft = '0px';
-            navbarLength[0].style.position = 'static';
-            username[0].style.display = 'none';
-        }
-        else {
-            mainContent.style.marginLeft = '250px';
-            navbarLength[0].style.position = 'fixed';
-            username[0].style.display = '';
-        }
-
-    });
+    // 👇 Extra failsafe: Re-enable sidebar toggle visibility on edge case
+    if (isMobileView() && isSidebarCollapsed) {
+        sidebarToggle.style.display = 'block';
+        sidebarToggle.style.zIndex = '1000'; // Ensure it's above other elements
+    }
 });
+
 </script>
 {% endmacro %}

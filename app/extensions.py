@@ -8,8 +8,12 @@ import logging
 from dotenv import load_dotenv
 import os
 import docker
+import docker.errors
 import re
 import datetime
+import asyncio
+import threading
+import time
 
 docker_client = docker.from_env()
 
@@ -22,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Discord OAuth2 credentials
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-REDIRECT_URI = "http://localhost:5000/auth/callback"
+REDIRECT_URI = "http://192.168.12.118/auth/callback"
 API_BASE_URL = "https://discord.com/api"
 AUTHORIZATION_BASE_URL = "https://discord.com/api/oauth2/authorize"
 TOKEN_URL = "https://discord.com/api/oauth2/token"
@@ -221,8 +225,6 @@ class Helpers:
             )
 
             # Wait for container to start and get port
-            import time
-
             for _ in range(5):  # Try 5 times
                 container.reload()
                 ports = container.attrs.get("NetworkSettings", {}).get("Ports", {})
@@ -234,6 +236,14 @@ class Helpers:
                         logger.info(f"Started Docker container for bot: {container.id}")
                         return True
                 time.sleep(1)
+
+            # Fetch the bot's avatar URL from /bot-details
+            # Have to wait like 15 seconds for this so its going to be diverted to an async function
+            threading.Thread(
+                target=Helpers.fetch_bot_avatar_url,
+                args=(bot_data["alias"],),
+                daemon=True,
+            ).start()
 
             raise Exception("Could not obtain container port after multiple attempts")
 
@@ -578,8 +588,79 @@ class Helpers:
         print(response)
         return f"""https://discord.com/oauth2/authorize?client_id={response.json().get("bot_id")}&permissions=309240907840&integration_type=0&scope=bot"""
 
+    def rehydrate_bots():
+        failed_to_load = []
+        with open(BOTS_FILE, "r") as bots_file:
+            for bot in json.load(bots_file):
+                container_name = f"{bot['alias']}"
+                try:
+                    container = docker_client.containers.get(container_name)
+                    if container.status != "running":
+                        print(f"Starting existing container: {container_name}")
+                        container.start()
+                except docker.errors.NotFound:
+                    failed_to_load.append(container_name)
+
+        return failed_to_load
+
+    def fetch_bot_avatar_url(bot_name):
+        time.sleep(15)  # Give it time before hitting /bot-details
+
+        try:
+            response = requests.get("http://your-api.local/bot-details", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                avatar_url = data.get("avatar_url")
+                if avatar_url:
+                    bots_file_path = DATA_DIR / "bots.json"
+                    with open(bots_file_path, "r") as ul_bots_file:
+                        bots_file = json.load(ul_bots_file)
+                        for bot in bots_file:
+                            if bot["alias"] == bot_name:
+                                url = "http://localhost:{port}/bot-details"
+                                requests.get(url)
+                                print(f"[avatar] Got avatar URL: {avatar_url}")
+
+        except Exception as e:
+            print(f"[avatar] Failed to fetch avatar: {e}")
+
 
 # Initialize settings manager
 from .utils.settings_manager import SettingsManager
 
 settings_manager = SettingsManager(DATA_DIR)
+
+
+def read_json_file(file_path):
+    """
+    Read and return the contents of a JSON file.
+    If the file doesn't exist, return an empty dictionary.
+    """
+    try:
+        with open(file_path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def write_json_file(file_path, data):
+    """
+    Write data to a JSON file.
+    Creates parent directories if they don't exist.
+    """
+    Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+def update_json_file(file_path, key, value):
+    """
+    Update a specific key in a JSON file.
+    If the file doesn't exist, it will be created.
+    """
+    data = read_json_file(file_path)
+    data[key] = value
+    write_json_file(file_path, data)
+    return data

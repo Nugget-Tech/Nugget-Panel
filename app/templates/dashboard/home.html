@@ -1,4 +1,6 @@
 {% extends "no-sidebar-base.html" %}
+{% from "components/rehydrate.html" import rehydrate %}
+
 
 {% block title %}Nugget Tech Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
@@ -303,6 +305,15 @@
             <span>Add New Bot</span>
         </a>
     </div>
+        <div class="form-actions">
+            <button type="submit" class="save-button" onclick="window.handleHydration()">
+                <span class="rehydrate-icon">
+                    <i class="fa-solid fa-rotate"></i>
+                </span>
+                    Rehydrate
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Add Bot Modal -->
@@ -343,6 +354,18 @@ function showAddBotModal() {
 
 function hideAddBotModal() {
     document.getElementById('addBotModal').style.display = 'none';
+}
+
+async function handleHydration() {
+    event.preventDefault();
+    
+
+    try {
+        const response = await fetch('/api/rehydrate', {method : "post"});
+    } catch (error) {
+
+    }
+    return false;
 }
 
 async function handleAddBot(event) {

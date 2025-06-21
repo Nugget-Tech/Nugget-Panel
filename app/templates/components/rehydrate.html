@@ -1,9 +1,10 @@
-{% macro save_button() %}
+{% macro rehydrate() %}
 <div class="form-actions">
     <button type="submit" class="save-button">
-            <i class="fas fa-save" style="color: var(--secondary);"></i>
-        <span class="save-icon"></span>
-        Save Changes
+        <span class="rehydrate-icon">
+            <i class="fa-solid fa-rotate"></i>
+        </span>
+        Rehydrate
     </button>
 </div>
 
@@ -36,5 +37,6 @@
 .save-icon {
     font-size: 1.1rem;
 }
+
 </style>
 {% endmacro %}

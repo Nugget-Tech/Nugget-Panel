@@ -177,3 +177,10 @@ def memories(nugget, guild_id: str):
 @Helpers.requires_auth
 def invite_nugget(nugget):
     return redirect(Helpers.fetch_invite(nugget))
+
+
+@api_bp.route("/rehydrate", methods=["GET", "POST"])
+@Helpers.requires_auth
+def rehydrate_bot():
+    failed_to_load = Helpers.rehydrate_bots()
+    return jsonify({"status": "ok", "failed_to_load": failed_to_load})
