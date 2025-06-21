@@ -1,0 +1,69 @@
+{% macro utilities() %}
+<div class="form-actions">
+    <button type="submit" class="rehydrate-button" onclick="window.handleHydration()">
+        <span class="rehydrate-icon">
+            <i class="fa-solid fa-play"></i>
+        </span>
+            Rehydrate
+    </button>
+    <button type="submit" class="restart-button" onclick="window.handle()">
+        <span class="rehydrate-icon">
+            <i class="fa-solid fa-rotate"></i>
+        </span>
+            Restart
+    </button>
+    <button type="submit" class="stop-button" onclick="window.handleStop()">
+        <span class="rehydrate-icon">
+            <i class="fa-solid fa-stop"></i>
+        </span>
+            Stop
+    </button>
+</div>
+
+<style>
+.form-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.rehydrate-button, .restart-button, .stop-button{
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rehydrate-button {
+    background: #5865F2;
+    color: white;
+    border: none;
+}
+
+.rehydrate-button:hover {
+    background: #4752C4;
+}
+
+.restart-button {
+    background: #43B581;
+    color: white;
+    border: none;
+}
+
+.restart-button:hover {
+    background: #3ca374;
+}
+
+.stop-button {
+    background: #dc3545;
+    color: white;
+    border : none
+}
+
+.stop-button:hover {
+    background-color: #bb2d3b;
+}
+</style>
+{% endmacro %}

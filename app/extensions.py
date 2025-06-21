@@ -67,8 +67,6 @@ class Helpers:
     def get_user_data():
         headers = {"Authorization": f"Bearer {session['token']}"}
         response = requests.get(f"{API_BASE_URL}/users/@me", headers=headers)
-        guilds = requests.get(f"{API_BASE_URL}/users/@me/guilds", headers=headers)
-        guilds = guilds.json()
         user_data = response.json()
         print("User data: ", user_data)
         return user_data
@@ -588,20 +586,81 @@ class Helpers:
         print(response)
         return f"""https://discord.com/oauth2/authorize?client_id={response.json().get("bot_id")}&permissions=309240907840&integration_type=0&scope=bot"""
 
-    def rehydrate_bots():
-        failed_to_load = []
-        with open(BOTS_FILE, "r") as bots_file:
-            for bot in json.load(bots_file):
-                container_name = f"{bot['alias']}"
-                try:
-                    container = docker_client.containers.get(container_name)
-                    if container.status != "running":
-                        print(f"Starting existing container: {container_name}")
-                        container.start()
-                except docker.errors.NotFound:
-                    failed_to_load.append(container_name)
+    def rehydrate_bots(bot_name=None):
+        if bot_name == None or bot_name == "":
+            failed_to_load = []
+            with open(BOTS_FILE, "r") as bots_file:
+                for bot in json.load(bots_file):
+                    try:
+                        container = docker_client.containers.get(bot["alias"])
+                        if container.status != "running":
+                            print(f"Starting existing container: {bot["alias"]}")
+                            container.start()
+                    except docker.errors.NotFound:
+                        failed_to_load.append(bot["alias"])
 
-        return failed_to_load
+            return failed_to_load
+        else:
+            failed_to_load = []
+            try:
+                container = docker_client.containers.get(bot_name)
+                if container.status != "running":
+                    print(f"Starting existing container: {bot_name}")
+                    container.start()
+            except docker.errors.NotFound:
+                failed_to_load.append()
+
+            return failed_to_load
+
+    def restart_bots(bot_name=None):
+        if bot_name == None or bot_name == "":
+            failed_to_load = []
+            with open(BOTS_FILE, "r") as bots_file:
+                for bot in json.load(bots_file):
+                    container_name = f"{bot['alias']}"
+                    try:
+                        container = docker_client.containers.get(container_name)
+                        print(f"Starting existing container: {container_name}")
+                        container.restart()
+                    except docker.errors.NotFound:
+                        failed_to_load.append(container_name)
+
+            return failed_to_load
+        else:
+            failed_to_load = []
+            try:
+                container = docker_client.containers.get(bot_name)
+                print(f"Restarting existing container: {bot_name}")
+                container.restart()
+            except docker.errors.NotFound:
+                failed_to_load.append(bot_name)
+
+            return failed_to_load
+
+    def stop_bots(bot_name=None):
+        if bot_name == None or bot_name == "":
+            failed_to_load = []
+            with open(BOTS_FILE, "r") as bots_file:
+                for bot in json.load(bots_file):
+                    container_name = f"{bot['alias']}"
+                    try:
+                        container = docker_client.containers.get(container_name)
+                        print(f"Stopping existing container: {container_name}")
+                        container.stop()
+                    except docker.errors.NotFound:
+                        failed_to_load.append(container_name)
+
+            return failed_to_load
+        else:
+            failed_to_load = []
+            try:
+                container = docker_client.containers.get(bot_name)
+                print(f"Stopping existing container: {bot_name}")
+                container.stop()
+            except docker.errors.NotFound:
+                failed_to_load.append(bot_name)
+
+            return failed_to_load
 
     def fetch_bot_avatar_url(bot_name):
         time.sleep(15)  # Give it time before hitting /bot-details
@@ -629,38 +688,3 @@ class Helpers:
 from .utils.settings_manager import SettingsManager
 
 settings_manager = SettingsManager(DATA_DIR)
-
-
-def read_json_file(file_path):
-    """
-    Read and return the contents of a JSON file.
-    If the file doesn't exist, return an empty dictionary.
-    """
-    try:
-        with open(file_path, "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
-    except json.JSONDecodeError:
-        return {}
-
-
-def write_json_file(file_path, data):
-    """
-    Write data to a JSON file.
-    Creates parent directories if they don't exist.
-    """
-    Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(file_path, "w") as f:
-        json.dump(data, f, indent=4)
-
-
-def update_json_file(file_path, key, value):
-    """
-    Update a specific key in a JSON file.
-    If the file doesn't exist, it will be created.
-    """
-    data = read_json_file(file_path)
-    data[key] = value
-    write_json_file(file_path, data)
-    return data

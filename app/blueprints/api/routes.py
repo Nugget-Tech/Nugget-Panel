@@ -179,8 +179,43 @@ def invite_nugget(nugget):
     return redirect(Helpers.fetch_invite(nugget))
 
 
-@api_bp.route("/rehydrate", methods=["GET", "POST"])
+@api_bp.route("/mass_rehydrate", methods=["POST"])
 @Helpers.requires_auth
-def rehydrate_bot():
+def rehydrate_bots():
     failed_to_load = Helpers.rehydrate_bots()
     return jsonify({"status": "ok", "failed_to_load": failed_to_load})
+
+
+@api_bp.route("/mass_restart", methods=["GET", "POST"])
+@Helpers.requires_auth
+def restart_bots():
+    failed_to_load = Helpers.restart_bots()
+    return jsonify({"status": "ok", "failed_to_stop": failed_to_load})
+
+
+@api_bp.route("/mass_stop", methods=["GET", "POST"])
+@Helpers.requires_auth
+def stop_bots():
+    failed_to_load = Helpers.stop_bots()
+    return jsonify({"status": "ok", "failed_to_stop": failed_to_load})
+
+
+@api_bp.route("/rehydrate/<nugget>", methods=["POST"])
+@Helpers.requires_auth
+def rehydrate_bot(nugget):
+    failed_to_load = Helpers.rehydrate_bots(bot_name=nugget)
+    return jsonify({"status": "ok", "failed_to_load": failed_to_load})
+
+
+@api_bp.route("/restart/<nugget>", methods=["GET", "POST"])
+@Helpers.requires_auth
+def restart_bot(nugget):
+    failed_to_load = Helpers.restart_bots(bot_name=nugget)
+    return jsonify({"status": "ok", "failed_to_stop": failed_to_load})
+
+
+@api_bp.route("/stop/<nugget>", methods=["GET", "POST"])
+@Helpers.requires_auth
+def stop_bot(nugget):
+    failed_to_load = Helpers.stop_bots(bot_name=nugget)
+    return jsonify({"status": "ok", "failed_to_stop": failed_to_load})

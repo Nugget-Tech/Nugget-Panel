@@ -1,6 +1,5 @@
 {% extends "no-sidebar-base.html" %}
-{% from "components/rehydrate.html" import rehydrate %}
-
+{% from "components/bot_util.html" import utilities %}
 
 {% block title %}Nugget Tech Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
@@ -193,7 +192,7 @@
         margin-top: 25px;
     }
 
-    .save-button, .cancel-button {
+    .save-button, .cancel-button, .rehydrate-button, .restart-button, .stop-button{
         padding: 12px 25px;
         border-radius: 8px;
         font-size: 1rem;
@@ -211,6 +210,38 @@
     .save-button:hover {
         background: #4752C4;
     }
+
+    .rehydrate-button {
+        background: #5865F2;
+        color: white;
+        border: none;
+    }
+
+    .rehydrate-button:hover {
+        background: #4752C4;
+    }
+
+    .restart-button {
+        background: #43B581;
+        color: white;
+        border: none;
+    }
+
+    .restart-button:hover {
+        background: #3ca374;
+    }
+
+    .stop-button {
+        background: #dc3545;
+        color: white;
+        border : none
+    }
+
+    .stop-button:hover {
+        background-color: #bb2d3b;
+    }
+
+
 
     .cancel-button {
         background: transparent;
@@ -305,14 +336,7 @@
             <span>Add New Bot</span>
         </a>
     </div>
-        <div class="form-actions">
-            <button type="submit" class="save-button" onclick="window.handleHydration()">
-                <span class="rehydrate-icon">
-                    <i class="fa-solid fa-rotate"></i>
-                </span>
-                    Rehydrate
-            </button>
-        </div>
+        {{ utilities() }}
     </div>
 </div>
 
@@ -359,13 +383,40 @@ function hideAddBotModal() {
 async function handleHydration() {
     event.preventDefault();
     
+    if (window.confirm("This will start >>ALL<< currently offline containers bots.")) {
+        try {
+            const response = await fetch('/api/mass_rehydrate', {method : "post"});
+        } catch (error) {
 
-    try {
-        const response = await fetch('/api/rehydrate', {method : "post"});
-    } catch (error) {
-
+        }
+        return false;
     }
-    return false;
+}
+
+async function handleRestart() {
+    event.preventDefault();
+    
+    if (window.confirm("This will restart all bots.")) {
+        try {
+            const response = await fetch('/api/mass_restart', {method : "post"});
+        } catch (error) {
+        
+        }
+        return false;
+    }
+}
+
+async function handleStop() {
+    event.preventDefault();
+
+    if (window.confirm("This will shut off all bots.")) {
+        try {
+            const response = await fetch('/api/mass_stop', {method : "post"});
+        } catch (error) {
+
+        }
+        return false;
+    }
 }
 
 async function handleAddBot(event) {

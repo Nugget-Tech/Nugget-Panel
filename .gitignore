@@ -1,4 +1,4 @@
-.env
+env
 security.txt
 data/personality_traits/*
 data/settings/*

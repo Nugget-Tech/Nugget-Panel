@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "components/save-button.html" import save_button %}
+{% from "components/bot_util.html" import utilities %}
 
 
 {% block title %}Analytics Dashboard - Nugget Tech{% endblock %}
@@ -16,7 +17,6 @@
     <div class="settings-group">
         <div class="settings-card">
             <div class="form-group">
-            
                 <label for="debugMode" class="switch-label">
 
                     <div class="switch-label-text">Debug mode <i class="fa-solid fa-code"></i></div>
@@ -39,8 +39,27 @@
                     </div>
                 
                 </label>
-                <div class="input-description">Frustrated because {{ personality.get("name") }} keeps prepending it's name to the message? wanna get rid of it no matter what? this feature flag statically removes any name you set for the bot.</div>    
-            
+                <div class="input-description">Frustrated because {{ personality.get("bot_name") }} keeps prepending it's name to the message? wanna get rid of it no matter what? this feature flag statically removes any name you set for the bot.</div>
+            </div>
+            <div class="settings-card">
+                <button type="submit" class="rehydrate-button" onclick="window.handleHydration()">
+                    <span class="rehydrate-icon">
+                        <i class="fa-solid fa-play"></i>
+                    </span>
+                        Rehydrate
+                </button>
+                <button type="submit" class="restart-button" onclick="window.handleRestart()">
+                    <span class="rehydrate-icon">
+                        <i class="fa-solid fa-rotate"></i>
+                    </span>
+                        Restart
+                </button>
+                <button type="submit" class="stop-button" onclick="window.handleStop()">
+                    <span class="rehydrate-icon">
+                        <i class="fa-solid fa-stop"></i>
+                    </span>
+                        Stop
+                </button>
             </div>
         </div>
     </div>
@@ -53,6 +72,45 @@
 
 {% block extra_css %}
 <style>
+    
+.rehydrate-button, .restart-button, .stop-button{
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rehydrate-button {
+    background: #5865F2;
+    color: white;
+    border: none;
+}
+
+.rehydrate-button:hover {
+    background: #4752C4;
+}
+
+.restart-button {
+    background: #43B581;
+    color: white;
+    border: none;
+}
+
+.restart-button:hover {
+    background: #3ca374;
+}
+
+.stop-button {
+    background: #dc3545;
+    color: white;
+    border : none
+}
+
+.stop-button:hover {
+    background-color: #bb2d3b;
+}
     .page-content {
         max-width: 800px;
         margin: 0 auto;
@@ -198,5 +256,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
 });
+
+
+async function handleHydration() {
+    event.preventDefault();
+    
+    if (window.confirm("This will start {{ personality.get('bot_name') }}'s container, if it is offline.")) {
+        try {
+            const response = await fetch('/api/rehydrate/{{nugget_alias}}', {method : "post"});
+        } catch (error) {
+
+        }
+        return false;
+    }
+}
+
+async function handleRestart() {
+    event.preventDefault();
+    
+    if (window.confirm("This will restart {{ personality.get('bot_name') }}'s container.")) {
+        try {
+            const response = await fetch('/api/restart/{{nugget_alias}}', {method : "post"});
+        } catch (error) {
+        
+        }
+        return false;
+    }
+}
+
+async function handleStop() {
+    event.preventDefault();
+
+    if (window.confirm("This will kill {{ personality.get('bot_name') }}'s container.")) {
+        try {
+            const response = await fetch('/api/stop/{{nugget_alias}}', {method : "post"});
+        } catch (error) {
+
+        }
+        return false;
+    }
+}
 </script>
 {% endblock %}
